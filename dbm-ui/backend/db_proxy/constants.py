@@ -8,9 +8,12 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+from django.utils.crypto import get_random_string
 from django.utils.translation import ugettext_lazy as _
 
 from backend.configuration.constants import DBType
+from backend.core.encrypt.constants import AsymmetricCipherConfigType
+from backend.core.encrypt.handlers import AsymmetricHandler
 from backend.flow.consts import CloudServiceName
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 
@@ -72,6 +75,14 @@ class ExtensionAccountEnum(str, StructuredEnum):
         if service == CloudServiceName.DRS:
             account_tuples.append((cls.WEBCONSOLE_USER, cls.WEBCONSOLE_PWD))
         return account_tuples
+
+    @classmethod
+    def generate_random_account(cls, bk_cloud_id: int):
+        rsa_cloud_name = AsymmetricCipherConfigType.get_cipher_cloud_name(bk_cloud_id)
+        user, password = get_random_string(8), get_random_string(16)
+        encrypt_user = AsymmetricHandler.encrypt(name=rsa_cloud_name, content=user)
+        encrypt_password = AsymmetricHandler.encrypt(name=rsa_cloud_name, content=password)
+        return {"user": user, "password": password, "encrypt_user": encrypt_user, "encrypt_password": encrypt_password}
 
 
 CLUSTER__SERVICE_MAP = {

@@ -70,3 +70,13 @@ environment variables
   value: {{ $val | quote }}
 {{- end }}
 {{- end }}
+
+{{- define "db-remote-service.container_env" -}}
+env:
+  {{- include "dbm.envs" . | trim | nindent 2 }}
+envFrom:
+  {{- if .Values.extraEnvVarsCM }}
+  - configMapRef:
+      name: {{ .Values.extraEnvVarsCM }}
+  {{- end }}
+{{- end }}

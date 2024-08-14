@@ -13,7 +13,6 @@ from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Union
 
 from bamboo_engine.builder import SubProcess
-from django.utils.crypto import get_random_string
 from django.utils.translation import ugettext as _
 
 from backend.core.encrypt.constants import AsymmetricCipherConfigType
@@ -69,10 +68,18 @@ class CloudBaseServiceFlow(object):
 
         def _fetch_usr_pwd(info, user_key, pwd_key):
             # 若任意一台主机信息包含用户/密码，则沿用直接返回解密原始账户或密码，否则生成
-            user = info.get(user_key, AsymmetricHandler.encrypt(name=rsa_cloud_name, content=get_random_string(8)))
-            pwd = info.get(pwd_key, AsymmetricHandler.encrypt(name=rsa_cloud_name, content=get_random_string(16)))
-            plain_user = AsymmetricHandler.decrypt(name=rsa_cloud_name, content=user)
-            plain_pwd = AsymmetricHandler.decrypt(name=rsa_cloud_name, content=pwd)
+            if info.get(user_key) and info.get(pwd_key):
+                user, pwd = info[user_key], info[pwd_key]
+                plain_user = AsymmetricHandler.decrypt(name=rsa_cloud_name, content=user)
+                plain_pwd = AsymmetricHandler.decrypt(name=rsa_cloud_name, content=pwd)
+            else:
+                account = ExtensionAccountEnum.generate_random_account(self.data["bk_cloud_id"])
+                user, pwd, plain_user, plain_pwd = (
+                    account["encrypt_user"],
+                    account["encrypt_password"],
+                    account["user"],
+                    account["password"],
+                )
             return {user_key: user, pwd_key: pwd, f"plain_{user_key}": plain_user, f"plain_{pwd_key}": plain_pwd}
 
         # 获取部署组件的主机信息
