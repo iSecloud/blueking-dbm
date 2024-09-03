@@ -1,4 +1,5 @@
-path=/data/install
+#!/bin/bash
+path=/usr/local/bkdb
 
 # nginx定时拉取大数据配置，这里只考虑直连区域
 data=$(
@@ -22,7 +23,8 @@ echo "$data" | jq -c '.data[]' | while read -r item; do
     echo "$file_content" > "$path/nginx-portable/conf/cluster_service/$file_name"
 done
 # 重启nginx
-$path/nginx-portable/nginx-portable restart
+$path/nginx-portable/nginx-portable stop
+$path/nginx-portable/nginx-portable start
 
 # nginx日志文件的定时清理，设置最大日志为100MB
 nginx_log_path="$path/nginx-portable/logs"

@@ -64,6 +64,10 @@ class CloudProxyPassViewSet(BaseProxyPassViewSet):
         elif data["extension"] == ExtensionType.DBHA:
             # dbha 随机生成账号/密码
             dbha_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
+            data["details"].update(
+                use=dbha_account["encrypt_user"],
+                pwd=dbha_account["encrypt_password"],
+            )
             # 获取proxy密码和mysql os密码
             dbha_password_map = DBPasswordHandler.batch_query_components_password(
                 components=[

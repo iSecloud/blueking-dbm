@@ -34,6 +34,7 @@ location /example_service/ {
 " > $path/nginx-portable/conf/cluster_service/example_service.conf
 
 # 开启定时任务
+printenv > /etc/environment
 crond_script_path=$path/nginx-portable/conf/crond.bash
 (crontab -l ; echo "*/5 * * * * $crond_script_path") 2>&1 | grep -v "no crontab" | sort | uniq | crontab -
 
