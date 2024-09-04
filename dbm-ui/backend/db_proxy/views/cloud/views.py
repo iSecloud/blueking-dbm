@@ -51,7 +51,7 @@ class CloudProxyPassViewSet(BaseProxyPassViewSet):
             drs_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
             webconsole_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
             data["details"].update(
-                use=drs_account["encrypt_user"],
+                user=drs_account["encrypt_user"],
                 pwd=drs_account["encrypt_password"],
                 webconsole_user=webconsole_account["encrypt_user"],
                 webconsole_pwd=webconsole_account["encrypt_password"],
@@ -65,7 +65,7 @@ class CloudProxyPassViewSet(BaseProxyPassViewSet):
             # dbha 随机生成账号/密码
             dbha_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
             data["details"].update(
-                use=dbha_account["encrypt_user"],
+                user=dbha_account["encrypt_user"],
                 pwd=dbha_account["encrypt_password"],
             )
             # 获取proxy密码和mysql os密码
