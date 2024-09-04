@@ -26,8 +26,8 @@ class _DRSApi(object):
     def __init__(self):
         ssl_flag = True
 
-        # 配置了DRS_SKIP_SSL，认为跳过ssl认证
-        if env.DRS_SKIP_SSL:
+        # 配置了DRS_SKIP_SSL，或者走容器化方式，认为跳过ssl认证
+        if env.DRS_SKIP_SSL or env.CLOUD_CONTAINER_ENABLE:
             ssl_flag = False
 
         self.rpc = ProxyAPI(

@@ -25,8 +25,8 @@ class ProxyAPI(DataAPI):
     def build_actual_url(self, param):
         url = super().build_actual_url(param)
 
-        # 如果配置了DOMAIN_SKIP_PROXY，表示跳过proxy代理
-        if env.DOMAIN_SKIP_PROXY:
+        # 如果配置了直连域名，或者容器化方案。表示跳过proxy代理
+        if env.DOMAIN_SKIP_PROXY or env.CLOUD_CONTAINER_ENABLE:
             return url
 
         try:

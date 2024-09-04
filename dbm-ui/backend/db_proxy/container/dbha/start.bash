@@ -10,7 +10,6 @@ curl -XPOST "$BK_DBM_URL/apis/proxypass/cloud/insert/" \
       "ip": "'"$NODE_IP"'",
       "dbha_type": "'"$DBHA_TYPE"'",
       "bk_city_code": "'"$DBHA_CITY"'",
-
       "bk_city_name": "'"$DBHA_CAMPUS"'",
       "bk_host_id": 0,
       "bk_cloud_id": 0

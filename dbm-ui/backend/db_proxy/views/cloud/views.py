@@ -39,35 +39,61 @@ class CloudProxyPassViewSet(BaseProxyPassViewSet):
     @action(methods=["POST"], serializer_class=InsertDBExtensionSerializer, detail=False)
     def insert(self, request, *args, **kwargs):
         data = self.params_validate(self.get_serializer_class())
-        output_info = {}
-        bk_cloud_id = data["bk_cloud_id"]
 
-        if data["extension"] == ExtensionType.NGINX:
+        output_info = {}
+        bk_cloud_id, extension_type = data["bk_cloud_id"], data["extension"]
+        extension = DBExtension.objects.filter(bk_cloud_id=bk_cloud_id, extension=extension_type)
+
+        def insert_nginx():
+            if extension.exists():
+                return
             # nginx需要写入代理信息
             ip = data["details"]["ip"]
             DBCloudProxy.objects.create(bk_cloud_id=data["bk_cloud_id"], internal_address=ip, external_address=ip)
-        elif data["extension"] == ExtensionType.DRS:
-            # drs随机生成账号/密码
-            drs_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
-            webconsole_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
-            data["details"].update(
-                user=drs_account["encrypt_user"],
-                pwd=drs_account["encrypt_password"],
-                webconsole_user=webconsole_account["encrypt_user"],
-                webconsole_pwd=webconsole_account["encrypt_password"],
-            )
+            DBExtension(**data, status=ExtensionServiceStatus.RUNNING).save()
+
+        def insert_dns():
+            if extension.exists():
+                return
+            DBExtension(**data, status=ExtensionServiceStatus.RUNNING).save()
+
+        def insert_drs():
+            if not extension.exists():
+                # drs随机生成账号/密码
+                drs_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
+                web_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
+                data["details"].update(
+                    user=drs_account["encrypt_user"],
+                    pwd=drs_account["encrypt_password"],
+                    webconsole_user=web_account["encrypt_user"],
+                    webconsole_pwd=web_account["encrypt_password"],
+                )
+                DBExtension(**data, status=ExtensionServiceStatus.RUNNING).save()
+            else:
+                drs = extension.first()
+                drs_account = ExtensionAccountEnum.get_account_info(
+                    bk_cloud_id, drs.details, "user", "pwd"
+                )
+                web_account = ExtensionAccountEnum.get_account_info(
+                    bk_cloud_id, drs.details, "webconsole_user", "webconsole_pwd"
+                )
             # drs proxy密码
             proxy_password = DBPasswordHandler.get_component_password(UserName.PROXY, MySQLPrivComponent.PROXY)
-            output_info.update(
-                drs_account=drs_account, webconsole_account=webconsole_account, proxy_password=proxy_password
-            )
-        elif data["extension"] == ExtensionType.DBHA:
-            # dbha 随机生成账号/密码
-            dbha_account = ExtensionAccountEnum.generate_random_account(bk_cloud_id)
-            data["details"].update(
-                user=dbha_account["encrypt_user"],
-                pwd=dbha_account["encrypt_password"],
-            )
+            output_info.update(drs_account=drs_account, webconsole_account=web_account, proxy_password=proxy_password)
+
+        def insert_dbha():
+            # 获取dbha的account信息
+            def get_dbha_account():
+                if not extension.exists():
+                    return ExtensionAccountEnum.generate_random_account(bk_cloud_id)
+                gm = extension.first().details
+                return ExtensionAccountEnum.get_account_info(bk_cloud_id, gm, "user", "pwd")
+
+            # 插入dbha记录
+            dbha_account = get_dbha_account()
+            if extension.count() < 2:
+                data["details"].update(user=dbha_account["encrypt_user"], pwd=dbha_account["encrypt_password"])
+                DBExtension(**data, status=ExtensionServiceStatus.RUNNING).save()
             # 获取proxy密码和mysql os密码
             dbha_password_map = DBPasswordHandler.batch_query_components_password(
                 components=[
@@ -81,7 +107,15 @@ class CloudProxyPassViewSet(BaseProxyPassViewSet):
                 mysql_os_password=dbha_password_map[UserName.OS_MYSQL][MySQLPrivComponent.MYSQL],
             )
 
-        DBExtension(**data, status=ExtensionServiceStatus.RUNNING).save()
+        if extension_type == ExtensionType.NGINX:
+            insert_nginx()
+        elif extension_type == ExtensionType.DNS:
+            insert_dns()
+        elif extension_type == ExtensionType.DRS:
+            insert_drs()
+        elif extension_type == ExtensionType.DBHA:
+            insert_dbha()
+
         return Response(output_info)
 
     @common_swagger_auto_schema(
