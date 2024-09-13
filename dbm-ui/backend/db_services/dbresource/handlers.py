@@ -16,7 +16,7 @@ from django.forms import model_to_dict
 from django.utils.translation import ugettext as _
 
 from backend.components.dbresource.client import DBResourceApi
-from backend.db_meta.enums import ClusterType, MachineType
+from backend.db_meta.enums.spec import SpecClusterType, SpecMachineType
 from backend.db_meta.models import Spec
 from backend.db_services.dbresource.enmus import DeployPlanChangeType
 from backend.db_services.dbresource.exceptions import SpecOperateException
@@ -46,8 +46,8 @@ class ClusterSpecFilter(object):
         ]
 
         if (
-            spec_cluster_type
-            in [ClusterType.TendisPredixyRedisCluster.value, ClusterType.TendisPredixyTendisplusCluster.value]
+            spec_machine_type
+            in [SpecMachineType.TendisPredixyRedisCluster, SpecMachineType.TendisPredixyTendisplusCluster]
             and old_spec_id != 0
         ):
             spec_old = Spec.objects.get(
@@ -328,7 +328,7 @@ class MongoDBShardSpecFilter(object):
     """mongodb分片集群的部署方案"""
 
     def __init__(self, capacity, spec_cluster_type, spec_machine_type, **kwargs):
-        if spec_cluster_type != ClusterType.MongoShardedCluster or spec_machine_type != MachineType.MONGODB:
+        if spec_cluster_type != SpecClusterType.MongoDB or spec_machine_type != SpecMachineType.MONGODB:
             raise SpecOperateException(_("请保证输入的集群类型是MongoShardedCluster，且机器规格为mongodb"))
 
         self.specs: List[Dict[str, Any]] = []
@@ -391,7 +391,7 @@ class ResourceHandler(object):
         spec_cluster_type = list(set(specs.values_list("spec_cluster_type", flat=True)))
         if len(spec_cluster_type) > 1:
             raise SpecOperateException(_("请保证请求的规格类型一致"))
-        resource_type = ClusterType.cluster_type_to_db_type(spec_cluster_type[0])
+        resource_type = spec_cluster_type[0]
         # 构造申请参数
         spec_count_details = [
             spec.get_group_apply_params(group_mark=str(spec.spec_id), count=1, group_count=1, bk_cloud_id=bk_cloud_id)
