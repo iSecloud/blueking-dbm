@@ -14,6 +14,7 @@ from typing import Dict, Optional
 from django.utils.translation import ugettext as _
 
 from backend.flow.engine.bamboo.scene.common.builder import Builder
+from backend.flow.plugins.components.collections.common.pause import PauseComponent
 from backend.flow.plugins.components.collections.mysql.fake_semantic_check import FakeSemanticCheckComponent
 
 logger = logging.getLogger("flow")
@@ -42,7 +43,7 @@ class MySQLFakeSemanticCheck(object):
         fake_semantic_check.add_act(act_name=_("串行1"), act_component_code=FakeSemanticCheckComponent.code, kwargs={})
         fake_semantic_check.add_act(act_name=_("串行2"), act_component_code=FakeSemanticCheckComponent.code, kwargs={})
         fake_semantic_check.add_act(act_name=_("串行3"), act_component_code=FakeSemanticCheckComponent.code, kwargs={})
-
+        fake_semantic_check.add_act(act_name=_("人工确认卸载实例"), act_component_code=PauseComponent.code, kwargs={})
         parallel_acts = [
             {
                 "act_name": _("并行1"),

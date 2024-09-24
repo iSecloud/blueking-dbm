@@ -15,6 +15,7 @@ from rest_framework import serializers
 
 from backend import env
 from backend.constants import INT_MAX
+from backend.db_dirty.constants import MachineEventType
 from backend.db_meta.enums import ClusterType, InstanceRole, MachineType
 from backend.db_meta.models import Spec
 from backend.db_services.dbresource import mock
@@ -160,6 +161,8 @@ class ResourceListResponseSerializer(serializers.Serializer):
 
 
 class ListDBAHostsSerializer(QueryHostsBaseSer):
+    bk_biz_id = serializers.IntegerField(help_text=_("业务ID"), required=False, default=env.DBA_APP_BK_BIZ_ID)
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         if not attrs.get("conditions"):
@@ -183,7 +186,9 @@ class ResourceConfirmSerializer(serializers.Serializer):
 
 
 class ResourceDeleteSerializer(serializers.Serializer):
+    bk_biz_id = serializers.IntegerField(help_text=_("资源专用业务"), default=env.DBA_APP_BK_BIZ_ID, required=False)
     bk_host_ids = serializers.ListField(help_text=_("主机ID列表"), child=serializers.IntegerField())
+    event = serializers.ChoiceField(help_text=_("删除事件(移入故障池/撤销导入)"), choices=MachineEventType.get_choices())
 
 
 class ResourceUpdateSerializer(serializers.Serializer):

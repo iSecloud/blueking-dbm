@@ -13,13 +13,12 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import AccessLayer, ClusterType
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.mysql import MySQLController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import (
     BaseOperateResourceParamBuilder,
     DisplayInfoSerializer,
-    HostInfoSerializer,
     InstanceInfoSerializer,
 )
 from backend.ticket.builders.mysql.base import (
@@ -32,13 +31,18 @@ from backend.ticket.constants import FlowRetryType, TicketType
 
 class MysqlProxySwitchDetailSerializer(MySQLBaseOperateDetailSerializer):
     class SwitchInfoSerializer(DisplayInfoSerializer):
+        class OldProxySerializer(serializers.Serializer):
+            origin_proxy = serializers.ListSerializer(child=InstanceInfoSerializer())
+
         cluster_ids = serializers.ListField(help_text=_("集群ID列表"), child=serializers.IntegerField())
-        origin_proxy = InstanceInfoSerializer(help_text=_("旧Proxy实例信息"))
-        target_proxy = HostInfoSerializer(help_text=_("新Proxy机器信息"), required=False)
-        resource_spec = serializers.JSONField(help_text=_("资源规格"), required=False)
+        old_nodes = OldProxySerializer(help_text=_("旧Proxy实例信息"))
+        resource_spec = serializers.JSONField(help_text=_("资源规格"))
 
     ip_source = serializers.ChoiceField(
-        help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.MANUAL_INPUT
+        help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.RESOURCE_POOL
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
     )
     force = serializers.BooleanField(help_text=_("是否强制替换"), required=False, default=False)
     infos = serializers.ListField(help_text=_("替换信息"), child=SwitchInfoSerializer())
@@ -74,9 +78,7 @@ class MysqlProxySwitchParamBuilder(builders.FlowParamBuilder):
 
     def format_ticket_data(self):
         for info in self.ticket_data["infos"]:
-            info["origin_proxy_ip"] = info["origin_proxy"]
-            if self.ticket_data["ip_source"] == IpSource.MANUAL_INPUT:
-                info["target_proxy_ip"] = info["target_proxy"]
+            info["origin_proxy_ip"] = info["old_nodes"]["origin_proxy"]
 
 
 class MysqlProxySwitchResourceParamBuilder(BaseOperateResourceParamBuilder):
@@ -92,9 +94,12 @@ class MysqlProxySwitchResourceParamBuilder(BaseOperateResourceParamBuilder):
 
 @builders.BuilderFactory.register(TicketType.MYSQL_PROXY_SWITCH, is_apply=True)
 class MysqlProxySwitchFlowBuilder(BaseMySQLHATicketFlowBuilder):
-    serializer = MysqlProxySwitchDetailSerializer
-    inner_flow_builder = MysqlProxySwitchParamBuilder
-    inner_flow_name = _("替换PROXY执行")
-    resource_batch_apply_builder = MysqlProxySwitchResourceParamBuilder
+    need_patch_recycle_host_details = True
     retry_type = FlowRetryType.MANUAL_RETRY
+    serializer = MysqlProxySwitchDetailSerializer
+
+    inner_flow_name = _("替换PROXY执行")
+    inner_flow_builder = MysqlProxySwitchParamBuilder
+
+    resource_batch_apply_builder = MysqlProxySwitchResourceParamBuilder
     pause_node_builder = MySQLBasePauseParamBuilder

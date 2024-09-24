@@ -10,8 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.sqlserver import SqlserverController
 from backend.ticket import builders
 from backend.ticket.builders.sqlserver.base import BaseSQLServerTicketFlowBuilder, SQLServerTakeDownDetailsSerializer
@@ -19,14 +21,16 @@ from backend.ticket.constants import FlowRetryType, TicketType
 
 
 class SQLServerDestroyDetailSerializer(SQLServerTakeDownDetailsSerializer):
-    pass
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
 
 class SQLServerDestroyFlowParamBuilder(builders.FlowParamBuilder):
     controller = SqlserverController.cluster_destroy_scene
 
 
-@builders.BuilderFactory.register(TicketType.SQLSERVER_DESTROY, phase=ClusterPhase.DESTROY)
+@builders.BuilderFactory.register(TicketType.SQLSERVER_DESTROY, phase=ClusterPhase.DESTROY, is_recycle=True)
 class SQLServerDestroyFlowBuilder(BaseSQLServerTicketFlowBuilder):
     """Sqlserver下架流程的构建基类"""
 
@@ -34,3 +38,4 @@ class SQLServerDestroyFlowBuilder(BaseSQLServerTicketFlowBuilder):
     inner_flow_builder = SQLServerDestroyFlowParamBuilder
     inner_flow_name = _("SQLServer 销毁执行")
     retry_type = FlowRetryType.MANUAL_RETRY
+    need_patch_recycle_cluster_details = True

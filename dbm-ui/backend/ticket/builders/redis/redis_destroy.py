@@ -12,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.redis import RedisController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import SkipToRepresentationMixin
@@ -25,7 +26,9 @@ from backend.ticket.constants import TicketType
 
 
 class RedisDestroyDetailSerializer(RedisSingleOpsBaseDetailSerializer):
-    pass
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
 
 class RedisDestroyFlowParamBuilder(builders.FlowParamBuilder):
@@ -59,9 +62,10 @@ class RedisInstanceDestroyFlowParamBuilder(builders.FlowParamBuilder):
     controller = RedisController.fake_scene
 
 
-@builders.BuilderFactory.register(TicketType.REDIS_INSTANCE_DESTROY, phase=ClusterPhase.DESTROY)
+@builders.BuilderFactory.register(TicketType.REDIS_INSTANCE_DESTROY, phase=ClusterPhase.DESTROY, is_recycle=True)
 class RedisInstanceCloseFlowBuilder(BaseRedisInstanceTicketFlowBuilder):
     serializer = RedisInstanceDestroyDetailSerializer
     inner_flow_builder = RedisInstanceDestroyFlowParamBuilder
     inner_flow_name = _("下架集群")
     pause_node_builder = RedisBasePauseParamBuilder
+    need_patch_recycle_cluster_details = True

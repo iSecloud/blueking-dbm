@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterType, InstanceInnerRole
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.mysql import MySQLController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import HostInfoSerializer, InstanceInfoSerializer
@@ -23,12 +24,18 @@ from backend.ticket.constants import TicketType
 
 class MysqlRestoreSlaveDetailSerializer(MySQLBaseOperateDetailSerializer):
     class RestoreInfoSerializer(serializers.Serializer):
-        old_slave = InstanceInfoSerializer(help_text=_("旧从库 IP"))
+        class OldSlaveSerializer(serializers.Serializer):
+            old_slave = serializers.ListSerializer(child=InstanceInfoSerializer())
+
+        old_nodes = OldSlaveSerializer(help_text=_("旧从库信息"))
         new_slave = HostInfoSerializer(help_text=_("新从库 IP"))
         cluster_ids = serializers.ListField(help_text=_("集群ID列表"), child=serializers.IntegerField())
 
     backup_source = serializers.ChoiceField(help_text=_("备份源"), choices=MySQLBackupSource.get_choices())
     infos = serializers.ListField(help_text=_("集群重建信息"), child=RestoreInfoSerializer())
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
     def validate(self, attrs):
         # 校验集群是否可用，集群类型为高可用
@@ -59,12 +66,14 @@ class MysqlRestoreSlaveParamBuilder(builders.FlowParamBuilder):
     def format_ticket_data(self):
         self.ticket_data["add_slave_only"] = False
         for info in self.ticket_data["infos"]:
-            info["old_slave_ip"], info["new_slave_ip"] = info["old_slave"]["ip"], info["new_slave"]["ip"]
-            info["bk_old_slave"], info["bk_new_slave"] = info.pop("old_slave"), info.pop("new_slave")
+            old_slave = info["old_nodes"]["old_slave"][0]
+            info["old_slave_ip"], info["new_slave_ip"] = old_slave["ip"], info["new_slave"]["ip"]
+            info["bk_old_slave"], info["bk_new_slave"] = old_slave, info.pop("new_slave")
 
 
-@builders.BuilderFactory.register(TicketType.MYSQL_RESTORE_SLAVE, is_apply=True)
+@builders.BuilderFactory.register(TicketType.MYSQL_RESTORE_SLAVE, is_apply=True, is_recycle=True)
 class MysqlRestoreSlaveFlowBuilder(BaseMySQLHATicketFlowBuilder):
     serializer = MysqlRestoreSlaveDetailSerializer
     inner_flow_builder = MysqlRestoreSlaveParamBuilder
     inner_flow_name = _("Slave重建执行")
+    need_patch_recycle_host_details = True

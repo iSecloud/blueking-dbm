@@ -22,6 +22,7 @@ from backend.bk_web.constants import LEN_L_LONG, LEN_LONG, LEN_NORMAL, LEN_SHORT
 from backend.bk_web.models import AuditedModel
 from backend.configuration.constants import PLAT_BIZ_ID, DBType
 from backend.db_monitor.exceptions import AutofixException
+from backend.db_services.dbbase.constants import IpDest
 from backend.ticket.constants import (
     EXCLUSIVE_TICKET_EXCEL_PATH,
     FlowRetryType,
@@ -205,6 +206,42 @@ class Ticket(AuditedModel):
             TicketFlowManager(ticket=ticket).run_next_flow()
 
         return ticket
+
+    @classmethod
+    def create_recycle_ticket(cls, ticket_id: int, ip_dest: IpDest):
+        """
+        从一个终止单据派生产生另一个清理单据
+        :param ticket_id: 终止单据ID
+        :param ip_dest: 机器流向
+        """
+        from backend.ticket.builders import BuilderFactory
+
+        ticket = cls.objects.get(id=ticket_id)
+        # 忽略非回收单据
+        if ticket.ticket_type not in BuilderFactory.apply_ticket_type:
+            return None
+
+        # 创建回收单据流程
+        from backend.ticket.builders.common.base import fetch_apply_hosts
+
+        details = {"recycle_hosts": fetch_apply_hosts(ticket.details), "ip_dest": ip_dest, "group": ticket.group}
+        recycle_ticket = cls.create_ticket(
+            ticket_type=TicketType.RECYCLE_HOST,
+            creator=ticket.creator,
+            bk_biz_id=ticket.bk_biz_id,
+            remark=_("单据{}终止后自动发起清理机器单据").format(ticket.id),
+            details=details,
+        )
+
+        # 对原单据动态插入一个描述flow，关联这个回收单
+        Flow.objects.create(
+            ticket=ticket,
+            flow_type=FlowType.HOST_RECYCLE_DELIVERY.value,
+            details={"recycle_ticket": recycle_ticket.id},
+            flow_alias=_("主机清理释放"),
+        )
+
+        return recycle_ticket
 
     @classmethod
     def create_ticket_from_bk_monitor(cls, callback_data):

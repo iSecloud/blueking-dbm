@@ -10,6 +10,7 @@ specific language governing permissions and limitations under the License.
 """
 from django.utils.translation import ugettext_lazy as _
 
+from backend.db_dirty.constants import PoolType
 from blue_krill.data_types.enum import EnumField, StructuredEnum
 
 ES_DEFAULT_PORT = 9200
@@ -25,9 +26,11 @@ KAFKA_DEFAULT_PORT = 9200
 DORIS_DEFAULT_HTTP_PORT = 8030
 DORIS_DEFAULT_QUERY_PORT = 9030
 
-
 IP_PORT_DIVIDER = ":"
 SPACE_DIVIDER = " "
+
+# 主机去向枚举
+IpDest = PoolType
 
 
 class IpSource(str, StructuredEnum):

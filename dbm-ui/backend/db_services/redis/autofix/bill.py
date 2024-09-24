@@ -56,8 +56,13 @@ def generate_autofix_ticket(fault_clusters: QuerySet):
         redis_proxies, redis_slaves, cluster_ids = [], [], [cluster.cluster_id]
         for fault_machine in fault_machines:
             fault_ip = fault_machine["ip"]
-            fault_obj = Machine.objects.filter(ip=fault_ip, bk_biz_id=cluster.bk_biz_id).get()
-            fault_info = {"ip": fault_ip, "spec_id": fault_obj.spec_id, "bk_sub_zone": fault_obj.bk_sub_zone}
+            fault_obj = Machine.objects.get(ip=fault_ip, bk_biz_id=cluster.bk_biz_id)
+            fault_info = {
+                "ip": fault_ip,
+                "spec_id": fault_obj.spec_id,
+                "bk_sub_zone": fault_obj.bk_sub_zone,
+                "bk_host_id": fault_obj.bk_host_id,
+            }
             if fault_machine["instance_type"] in [MachineType.TWEMPROXY.value, MachineType.PREDIXY.value]:
                 redis_proxies.append(fault_info)
             else:

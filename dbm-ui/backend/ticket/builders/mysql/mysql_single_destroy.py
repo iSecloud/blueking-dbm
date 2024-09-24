@@ -10,8 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.mysql import MySQLController
 from backend.iam_app.dataclass.actions import ActionEnum
 from backend.ticket import builders
@@ -20,7 +22,9 @@ from backend.ticket.constants import TicketType
 
 
 class MysqlSingleDestroyDetailSerializer(MySQLClustersTakeDownDetailsSerializer):
-    pass
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
 
 class MysqlSingleDestroyFlowParamBuilder(builders.FlowParamBuilder):
@@ -28,9 +32,10 @@ class MysqlSingleDestroyFlowParamBuilder(builders.FlowParamBuilder):
 
 
 @builders.BuilderFactory.register(
-    TicketType.MYSQL_SINGLE_DESTROY, phase=ClusterPhase.DESTROY, iam=ActionEnum.MYSQL_DESTROY
+    TicketType.MYSQL_SINGLE_DESTROY, phase=ClusterPhase.DESTROY, iam=ActionEnum.MYSQL_DESTROY, is_recycle=True
 )
 class MysqlSingleDestroyFlowBuilder(BaseMySQLSingleTicketFlowBuilder):
     serializer = MysqlSingleDestroyDetailSerializer
     inner_flow_builder = MysqlSingleDestroyFlowParamBuilder
     inner_flow_name = _("MySQL单节点销毁执行")
+    need_patch_recycle_cluster_details = True

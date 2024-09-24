@@ -11,8 +11,10 @@ specific language governing permissions and limitations under the License.
 import logging
 
 from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.doris import DorisController
 from backend.ticket import builders
 from backend.ticket.builders.common.bigdata import BaseDorisTicketFlowBuilder, BigDataTakeDownDetailSerializer
@@ -22,7 +24,9 @@ logger = logging.getLogger("root")
 
 
 class DorisDestroyDetailSerializer(BigDataTakeDownDetailSerializer):
-    pass
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
 
 class DorisDestroyFlowParamBuilder(builders.FlowParamBuilder):
@@ -34,3 +38,4 @@ class DorisDestroyFlowBuilder(BaseDorisTicketFlowBuilder):
     serializer = DorisDestroyDetailSerializer
     inner_flow_builder = DorisDestroyFlowParamBuilder
     inner_flow_name = _("DORIS集群删除")
+    need_patch_recycle_cluster_details = True

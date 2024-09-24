@@ -18,7 +18,6 @@ from backend import env
 from backend.bk_web.constants import LEN_MIDDLE, LEN_SHORT
 from backend.bk_web.models import AuditedModel
 from backend.ticket.constants import FlowMsgStatus, FlowMsgType, TicketFlowStatus, TodoStatus, TodoType
-from backend.ticket.tasks.ticket_tasks import send_msg_for_flow
 
 logger = logging.getLogger("root")
 
@@ -28,6 +27,8 @@ class TodoManager(models.Manager):
         return self.filter(status__in=[TodoStatus.TODO, TodoStatus.RUNNING]).exists()
 
     def create(self, **kwargs):
+        from backend.ticket.tasks.ticket_tasks import send_msg_for_flow
+
         todo = super().create(**kwargs)
         send_msg_for_flow.apply_async(
             kwargs={

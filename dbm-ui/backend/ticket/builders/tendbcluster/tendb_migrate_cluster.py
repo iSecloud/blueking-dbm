@@ -12,7 +12,7 @@ specific language governing permissions and limitations under the License.
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import BaseOperateResourceParamBuilder, HostInfoSerializer
@@ -23,15 +23,21 @@ from backend.ticket.constants import FlowRetryType, TicketType
 
 class TendbClusterMigrateClusterDetailSerializer(TendbBaseOperateDetailSerializer):
     class MigrateClusterInfoSerializer(serializers.Serializer):
+        class OldMasterSlaveSerializer(serializers.Serializer):
+            old_master = serializers.ListSerializer(child=HostInfoSerializer(help_text=_("旧主库主机"), required=False))
+            old_slave = serializers.ListSerializer(child=HostInfoSerializer(help_text=_("旧从库主机"), required=False))
+
         new_master = HostInfoSerializer(help_text=_("新主库主机"), required=False)
         new_slave = HostInfoSerializer(help_text=_("新从库主机"), required=False)
-        old_master = HostInfoSerializer(help_text=_("旧主库主机"), required=False)
-        old_slave = HostInfoSerializer(help_text=_("旧从库主机"), required=False)
+        old_nodes = OldMasterSlaveSerializer(help_text=_("旧主从主机"))
         resource_spec = serializers.JSONField(help_text=_("资源规格"), required=False)
         cluster_id = serializers.IntegerField(help_text=_("集群ID列表"))
 
     ip_source = serializers.ChoiceField(
         help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.MANUAL_INPUT
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
     )
     infos = serializers.ListSerializer(help_text=_("克隆主从信息"), child=MigrateClusterInfoSerializer())
     backup_source = serializers.ChoiceField(
@@ -50,13 +56,16 @@ class TendbClusterMigrateClusterParamBuilder(builders.FlowParamBuilder):
     controller = SpiderController.tendb_cluster_remote_migrate
 
     def format_ticket_data(self):
+        for info in self.ticket_data["infos"]:
+            info["old_master_ip"] = info["old_nodes"]["old_master"][0]["ip"]
+            info["old_slave_ip"] = info["old_nodes"]["old_slave"][0]["ip"]
+
         if self.ticket_data["ip_source"] == IpSource.RESOURCE_POOL:
             return
 
         for info in self.ticket_data["infos"]:
             info["new_master_ip"], info["new_slave_ip"] = info["new_master"]["ip"], info["new_slave"]["ip"]
             info["bk_new_master"], info["bk_new_slave"] = info.pop("new_master"), info.pop("new_slave")
-            info["old_master_ip"], info["old_slave_ip"] = info.pop("old_master")["ip"], info.pop("old_slave")["ip"]
 
 
 class TendbClusterMigrateClusterResourceParamBuilder(BaseOperateResourceParamBuilder):
@@ -66,15 +75,15 @@ class TendbClusterMigrateClusterResourceParamBuilder(BaseOperateResourceParamBui
         for info in ticket_data["infos"]:
             info["bk_new_master"], info["bk_new_slave"] = info.pop("new_master")[0], info.pop("new_slave")[0]
             info["new_master_ip"], info["new_slave_ip"] = info["bk_new_master"]["ip"], info["bk_new_slave"]["ip"]
-            info["old_master_ip"], info["old_slave_ip"] = info.pop("old_master")["ip"], info.pop("old_slave")["ip"]
 
         next_flow.save(update_fields=["details"])
 
 
-@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_MIGRATE_CLUSTER, is_apply=True)
+@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_MIGRATE_CLUSTER, is_apply=True, is_recycle=True)
 class TendbClusterMigrateClusterFlowBuilder(BaseTendbTicketFlowBuilder):
     serializer = TendbClusterMigrateClusterDetailSerializer
     inner_flow_builder = TendbClusterMigrateClusterParamBuilder
     inner_flow_name = _("TenDB Cluster 主从迁移执行")
     resource_batch_apply_builder = TendbClusterMigrateClusterResourceParamBuilder
     retry_type = FlowRetryType.MANUAL_RETRY
+    need_patch_recycle_host_details = True

@@ -19,11 +19,15 @@ from backend.bk_web import viewsets
 from backend.bk_web.pagination import AuditedLimitOffsetPagination
 from backend.bk_web.swagger import common_swagger_auto_schema
 from backend.db_dirty.constants import SWAGGER_TAG
-from backend.db_dirty.filters import DirtyMachineFilter
+from backend.db_dirty.filters import DirtyMachineFilter, DirtyMachinePoolFilter, MachineEventFilter
 from backend.db_dirty.handlers import DBDirtyMachineHandler
-from backend.db_dirty.models import DirtyMachine
+from backend.db_dirty.models import DirtyMachine, MachineEvent
 from backend.db_dirty.serializers import (
     DeleteDirtyMachineSerializer,
+    ListMachineEventResponseSerializer,
+    ListMachineEventSerializer,
+    ListMachinePoolResponseSerializer,
+    ListMachinePoolSerializer,
     QueryDirtyMachineResponseSerializer,
     QueryDirtyMachineSerializer,
     TransferDirtyMachineSerializer,
@@ -35,14 +39,14 @@ from backend.iam_app.handlers.permission import Permission
 
 
 class DBDirtyMachineViewSet(viewsets.SystemViewSet):
-    pagination_class = None
+    pagination_class = AuditedLimitOffsetPagination
     filter_class = None
 
     action_permission_map = {("query_operation_list",): []}
     default_permission_class = [ResourceActionPermission([ActionEnum.DIRTY_POLL_MANAGE])]
 
     @common_swagger_auto_schema(
-        operation_summary=_("查询污点池列表"),
+        operation_summary=_("[TODO待删除]查询污点池列表"),
         responses={status.HTTP_200_OK: QueryDirtyMachineResponseSerializer()},
         tags=[SWAGGER_TAG],
     )
@@ -80,23 +84,7 @@ class DBDirtyMachineViewSet(viewsets.SystemViewSet):
         return self.paginator.get_paginated_response(data=dirty_machine_list)
 
     @common_swagger_auto_schema(
-        operation_summary=_("将污点池主机转移至待回收模块"),
-        request_body=TransferDirtyMachineSerializer(),
-        tags=[SWAGGER_TAG],
-    )
-    @action(
-        detail=False,
-        methods=["POST"],
-        url_path="transfer_dirty_machines",
-        serializer_class=TransferDirtyMachineSerializer,
-    )
-    def transfer_dirty_machines(self, request):
-        bk_host_ids = self.params_validate(self.get_serializer_class())["bk_host_ids"]
-        DBDirtyMachineHandler.transfer_dirty_machines(bk_host_ids)
-        return Response()
-
-    @common_swagger_auto_schema(
-        operation_summary=_("删除污点池记录"),
+        operation_summary=_("[TODO待删除]删除污点池记录"),
         request_body=DeleteDirtyMachineSerializer(),
         tags=[SWAGGER_TAG],
     )
@@ -108,5 +96,38 @@ class DBDirtyMachineViewSet(viewsets.SystemViewSet):
     )
     def delete_dirty_records(self, request):
         bk_host_ids = self.params_validate(self.get_serializer_class())["bk_host_ids"]
-        DBDirtyMachineHandler.remove_dirty_machines(bk_host_ids)
+        DirtyMachine.objects.filter(bk_host_id__in=bk_host_ids).delete()
         return Response()
+
+    @common_swagger_auto_schema(
+        operation_summary=_("将主机转移至待回收/故障池模块"),
+        request_body=TransferDirtyMachineSerializer(),
+        tags=[SWAGGER_TAG],
+    )
+    @action(detail=False, methods=["POST"], serializer_class=TransferDirtyMachineSerializer)
+    def transfer_hosts_to_pool(self, request):
+        data = self.params_validate(self.get_serializer_class())
+        DBDirtyMachineHandler.transfer_hosts_to_pool(operator=request.user.username, **data)
+        return Response()
+
+    @common_swagger_auto_schema(
+        operation_summary=_("机器事件列表"),
+        responses={status.HTTP_200_OK: ListMachineEventResponseSerializer()},
+        tags=[SWAGGER_TAG],
+    )
+    @action(detail=False, methods=["GET"], filter_class=MachineEventFilter, queryset=MachineEvent.objects.all())
+    def list_machine_events(self, request):
+        events_qs = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        events_data = ListMachineEventSerializer(events_qs, many=True).data
+        return self.paginator.get_paginated_response(data=events_data)
+
+    @common_swagger_auto_schema(
+        operation_summary=_("主机池查询"),
+        responses={status.HTTP_200_OK: ListMachinePoolResponseSerializer()},
+        tags=[SWAGGER_TAG],
+    )
+    @action(detail=False, methods=["GET"], filter_class=DirtyMachinePoolFilter, queryset=DirtyMachine.objects.all())
+    def query_machine_pool(self, request):
+        machine_qs = self.paginate_queryset(self.filter_queryset(self.get_queryset()))
+        machine_data = ListMachinePoolSerializer(machine_qs, many=True).data
+        return self.paginator.get_paginated_response(data=machine_data)

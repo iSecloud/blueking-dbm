@@ -12,8 +12,9 @@ specific language governing permissions and limitations under the License.
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from backend.db_meta.enums import ClusterType
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_meta.enums import ClusterType, InstanceInnerRole
+from backend.db_meta.models import Cluster
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.mysql import MySQLController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import BaseOperateResourceParamBuilder, HostInfoSerializer
@@ -31,6 +32,9 @@ class MysqlMigrateClusterDetailSerializer(MySQLBaseOperateDetailSerializer):
 
     ip_source = serializers.ChoiceField(
         help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.MANUAL_INPUT
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
     )
     infos = serializers.ListField(help_text=_("迁移主从信息"), child=MigrateClusterInfoSerializer())
     backup_source = serializers.ChoiceField(
@@ -77,10 +81,28 @@ class MysqlMigrateClusterResourceParamBuilder(BaseOperateResourceParamBuilder):
         next_flow.save(update_fields=["details"])
 
 
-@builders.BuilderFactory.register(TicketType.MYSQL_MIGRATE_CLUSTER, is_apply=True)
+@builders.BuilderFactory.register(TicketType.MYSQL_MIGRATE_CLUSTER, is_apply=True, is_recycle=True)
 class MysqlMigrateClusterFlowBuilder(BaseMySQLHATicketFlowBuilder):
     serializer = MysqlMigrateClusterDetailSerializer
     inner_flow_builder = MysqlMigrateClusterParamBuilder
     inner_flow_name = _("迁移主从执行")
     resource_batch_apply_builder = MysqlMigrateClusterResourceParamBuilder
     retry_type = FlowRetryType.MANUAL_RETRY
+
+    need_patch_recycle_host_details = True
+
+    @staticmethod
+    def get_old_master_slave_host(info):
+        # 同机关联情况下，任取一台集群
+        cluster = Cluster.objects.get(id=info["cluster_ids"][0])
+        master = cluster.storageinstance_set.get(instance_inner_role=InstanceInnerRole.MASTER)
+        slave = cluster.storageinstance_set.get(instance_inner_role=InstanceInnerRole.SLAVE, is_stand_by=True)
+        # 补充下架的机器信息
+        info["old_nodes"] = {"old_master": [master.machine.simple_desc], "old_slave": [slave.machine.simple_desc]}
+        return info
+
+    def patch_ticket_detail(self):
+        # mysql主从迁移会下架掉master和slave(stand by)
+        for info in self.ticket.details["infos"]:
+            self.get_old_master_slave_host(info)
+        super().patch_ticket_detail()

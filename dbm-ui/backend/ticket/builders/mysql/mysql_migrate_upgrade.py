@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterType
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.db_services.mysql.fixpoint_rollback.handlers import FixPointRollbackHandler
 from backend.flow.consts import MySQLBackupTypeEnum
 from backend.flow.engine.controller.mysql import MySQLController
@@ -27,6 +27,7 @@ from backend.ticket.builders.common.base import (
 )
 from backend.ticket.builders.common.constants import MySQLBackupSource
 from backend.ticket.builders.mysql.base import BaseMySQLTicketFlowBuilder, MySQLBaseOperateDetailSerializer
+from backend.ticket.builders.mysql.mysql_migrate_cluster import MysqlMigrateClusterFlowBuilder
 from backend.ticket.constants import TicketType
 
 
@@ -41,6 +42,9 @@ class MysqlMigrateUpgradeDetailSerializer(MySQLBaseOperateDetailSerializer):
 
     ip_source = serializers.ChoiceField(
         help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.MANUAL_INPUT
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
     )
     backup_source = serializers.ChoiceField(help_text=_("备份源"), choices=MySQLBackupSource.get_choices())
     infos = serializers.ListField(help_text=_("添加信息"), child=InfoSerializer())
@@ -88,8 +92,16 @@ class MysqlMigrateUpgradeResourceParamBuilder(BaseOperateResourceParamBuilder):
         next_flow.save(update_fields=["details"])
 
 
-@builders.BuilderFactory.register(TicketType.MYSQL_MIGRATE_UPGRADE, is_apply=True)
+@builders.BuilderFactory.register(TicketType.MYSQL_MIGRATE_UPGRADE, is_apply=True, is_recycle=True)
 class MysqlMigrateUpgradeFlowBuilder(BaseMySQLTicketFlowBuilder):
     serializer = MysqlMigrateUpgradeDetailSerializer
     inner_flow_builder = MysqlMigrateUpgradeParamBuilder
     resource_batch_apply_builder = MysqlMigrateUpgradeResourceParamBuilder
+
+    need_patch_recycle_host_details = True
+
+    def patch_ticket_detail(self):
+        # mysql主从升级会下架掉master和slave(stand by)
+        for info in self.ticket.details["infos"]:
+            MysqlMigrateClusterFlowBuilder.get_old_master_slave_host(info)
+        super().patch_ticket_detail()
