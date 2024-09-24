@@ -454,7 +454,6 @@ class TicketType(str, StructuredEnum):
                                                       _("集群维护"))  # noqa
     REDIS_CLUSTER_INS_MIGRATE = TicketEnumField("REDIS_CLUSTER_INS_MIGRATE", _("Redis 集群指定实例迁移"), _("集群管理"))
     REDIS_SINGLE_INS_MIGRATE = TicketEnumField("REDIS_SINGLE_INS_MIGRATE", _("Redis 主从指定实例迁移"), _("集群管理"))
-
     # 大数据
     KAFKA_APPLY = TicketEnumField("KAFKA_APPLY", _("Kafka 集群部署"), register_iam=False)
     KAFKA_SCALE_UP = TicketEnumField("KAFKA_SCALE_UP", _("Kafka 集群扩容"), _("集群管理"))
@@ -576,6 +575,7 @@ class TicketType(str, StructuredEnum):
     # 资源池
     RESOURCE_IMPORT = EnumField("RESOURCE_IMPORT", _("资源池导入"))
     ADMIN_PASSWORD_MODIFY = EnumField("ADMIN_PASSWORD_MODIFY", _("临时密码修改"))
+    RECYCLE_HOST = EnumField("RECYCLE_HOST", _("主机回收"))
     # fmt: on
 
     # VM
@@ -617,8 +617,10 @@ class FlowType(str, StructuredEnum):
     RESOURCE_DELIVERY = EnumField("RESOURCE_DELIVERY", _("资源交付"))
     # 资源批量申请节点
     RESOURCE_BATCH_APPLY = EnumField("RESOURCE_BATCH_APPLY", _("资源批量申请"))
-    # 资源批量交付节点
-    RESOURCE_BATCH_DELIVERY = EnumField("RESOURCE_BATCH_DELIVERY", _("资源批量交付"))
+    # 主机回收
+    HOST_RECYCLE = EnumField("HOST_RECYCLE", _("主机回收"))
+    # 主机重导入资源池
+    HOST_IMPORT_RESOURCE = EnumField("HOST_IMPORT_RESOURCE", _("主机重导入资源池"))
 
 
 class FlowContext(str, StructuredEnum):
