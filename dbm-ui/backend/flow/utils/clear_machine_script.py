@@ -9,9 +9,10 @@ specific language governing permissions and limitations under the License.
 """
 
 from backend.configuration.constants import DBType
+from backend.db_services.ipchooser.constants import BkOsTypeCode
 from backend.flow.consts import DBA_ROOT_USER, WINDOW_SYSTEM_JOB_USER
 
-os_script_language_map = {"linux": 1, "window": 5}
+os_script_language_map = {BkOsTypeCode.LINUX: 1, BkOsTypeCode.WINDOWS: 5}
 
 mysql_clear_machine_script = """
 echo "clear mysql crontab...."
@@ -233,6 +234,7 @@ echo "Step 6 completed"
 
 db_type_script_map = {
     DBType.MySQL.value: mysql_clear_machine_script,
+    DBType.TenDBCluster.value: mysql_clear_machine_script,
     DBType.Sqlserver.value: sqlserver_clear_machine_script,
     DBType.Es.value: es_clear_machine_script,
     DBType.Kafka.value: kafka_clear_machine_script,
@@ -244,6 +246,7 @@ db_type_script_map = {
 
 db_type_account_user_map = {
     DBType.MySQL.value: DBA_ROOT_USER,
+    DBType.TenDBCluster.value: DBA_ROOT_USER,
     DBType.Sqlserver.value: WINDOW_SYSTEM_JOB_USER,
     DBType.Es.value: DBA_ROOT_USER,
     DBType.Kafka.value: DBA_ROOT_USER,
