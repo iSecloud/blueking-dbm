@@ -20,7 +20,7 @@ from backend.db_meta.enums import ClusterType
 from backend.db_meta.enums.cluster_phase import ClusterPhase
 from backend.db_meta.models.cluster import Cluster
 from backend.db_meta.models.instance import StorageInstance
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.ticket.builders import BuilderFactory, TicketFlowBuilder
 from backend.ticket.builders.common.base import (
     BaseOperateResourceParamBuilder,
@@ -180,12 +180,17 @@ class BigDataApplyDetailsSerializer(BigDataDetailsSerializer):
 
 
 class BigDataReplaceDetailSerializer(BigDataSingleClusterOpsDetailsSerializer):
-    ip_source = serializers.ChoiceField(help_text=_("主机来源"), choices=IpSource.get_choices())
     old_nodes = serializers.DictField(help_text=_("旧节点信息集合"), child=serializers.ListField(help_text=_("节点信息")))
     new_nodes = serializers.DictField(
         help_text=_("新节点信息集合"), child=serializers.ListField(help_text=_("节点信息")), required=False
     )
     resource_spec = serializers.JSONField(help_text=_("规格类型"), required=False)
+    ip_source = serializers.ChoiceField(
+        help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
     def validate(self, attrs):
         # 校验替换前后角色类型和数量一致

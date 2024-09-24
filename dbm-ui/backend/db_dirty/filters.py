@@ -13,7 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_filters import rest_framework as filters
 from django_filters.filters import BaseInFilter, NumberFilter
 
-from backend.db_dirty.models import DirtyMachine
+from backend.db_dirty.models import DirtyMachine, MachineEvent
 
 
 class NumberInFilter(BaseInFilter, NumberFilter):
@@ -50,3 +50,29 @@ class DirtyMachineFilter(filters.FilterSet):
     class Meta:
         model = DirtyMachine
         fields = ["ticket_types", "ticket_ids", "task_ids", "operator", "ip"]
+
+
+class MachineEventFilter(filters.FilterSet):
+    operator = filters.CharFilter(field_name="creator", lookup_expr="icontains", label=_("操作者"))
+    bk_biz_id = filters.NumberFilter(field_name="bk_biz_id", label=_("业务"))
+    event = filters.CharFilter(field_name="event", lookup_expr="exact", label=_("事件类型"))
+    ips = filters.CharFilter(field_name="ip", method="filter_ips", label=_("过滤IP"))
+
+    def filter_ips(self, queryset, name, value):
+        return queryset.filter(ip__in=value.split(","))
+
+    class Meta:
+        model = MachineEvent
+        fields = ["operator", "bk_biz_id", "event", "ips"]
+
+
+class DirtyMachinePoolFilter(filters.FilterSet):
+    ips = filters.CharFilter(field_name="ip", method="filter_ips", label=_("过滤IP"))
+    pool = filters.CharFilter(field_name="event", lookup_expr="exact", label=_("事件类型"))
+
+    def filter_ips(self, queryset, name, value):
+        return queryset.filter(ip__in=value.split(","))
+
+    class Meta:
+        model = DirtyMachine
+        fields = ["ips", "pool"]

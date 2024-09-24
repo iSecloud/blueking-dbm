@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
 from backend.ticket.builders.common.constants import MySQLBackupSource
@@ -43,6 +43,9 @@ class TendbNodeRebalanceDetailSerializer(TendbBaseOperateDetailSerializer):
     )
     ip_source = serializers.ChoiceField(
         help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL.value
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
     )
     need_checksum = serializers.BooleanField(help_text=_("执行前是否需要数据校验"))
     trigger_checksum_type = serializers.ChoiceField(help_text=_("数据校验触发类型"), choices=TriggerChecksumType.get_choices())
@@ -85,9 +88,10 @@ class TendbNodeRebalanceResourceParamBuilder(TendbBaseOperateResourceParamBuilde
         next_flow.save(update_fields=["details"])
 
 
-@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_NODE_REBALANCE, is_apply=True)
+@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_NODE_REBALANCE, is_apply=True, is_recycle=True)
 class TendbMNTApplyFlowBuilder(BaseTendbTicketFlowBuilder):
     serializer = TendbNodeRebalanceDetailSerializer
     inner_flow_builder = TendbNodeRebalanceFlowParamBuilderBuilder
     resource_batch_apply_builder = TendbNodeRebalanceResourceParamBuilder
     inner_flow_name = _("TendbCluster 集群容量变更")
+    need_patch_recycle_cluster_details = True

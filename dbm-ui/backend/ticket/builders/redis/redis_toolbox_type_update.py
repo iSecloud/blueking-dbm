@@ -15,7 +15,7 @@ from rest_framework import serializers
 from backend.configuration.constants import AffinityEnum
 from backend.db_meta.enums import ClusterType
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.db_services.version.utils import query_versions_by_key
 from backend.flow.engine.controller.redis import RedisController
 from backend.ticket import builders
@@ -82,7 +82,12 @@ class RedisTypeUpdateDetailSerializer(SkipToRepresentationMixin, serializers.Ser
             return attr
 
     data_check_repair_setting = DataCheckRepairSettingSerializer()
-    ip_source = serializers.ChoiceField(help_text=_("主机来源"), choices=IpSource.get_choices())
+    ip_source = serializers.ChoiceField(
+        help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
     infos = serializers.ListField(help_text=_("批量操作参数列表"), child=InfoSerializer(), allow_empty=False)
 
 
@@ -101,9 +106,10 @@ class RedisTypeUpdateResourceParamBuilder(RedisUpdateApplyResourceParamBuilder):
             info["resource_spec"]["proxy"]["group_count"] = 2
 
 
-@builders.BuilderFactory.register(TicketType.REDIS_CLUSTER_TYPE_UPDATE, is_apply=True)
+@builders.BuilderFactory.register(TicketType.REDIS_CLUSTER_TYPE_UPDATE, is_apply=True, is_recycle=True)
 class RedisTypeUpdateFlowBuilder(BaseRedisTicketFlowBuilder):
     serializer = RedisTypeUpdateDetailSerializer
     inner_flow_builder = RedisTypeUpdateParamBuilder
     inner_flow_name = _("Redis 集群类型变更")
     resource_batch_apply_builder = RedisTypeUpdateResourceParamBuilder
+    need_patch_recycle_cluster_details = True

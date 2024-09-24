@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+import itertools
 import operator
 import re
 from collections import defaultdict
@@ -23,6 +24,7 @@ from backend.configuration.constants import MASTER_DOMAIN_INITIAL_VALUE, Affinit
 from backend.db_meta.enums import AccessLayer, ClusterPhase, ClusterType, InstanceInnerRole, InstanceStatus
 from backend.db_meta.enums.comm import SystemTagEnum
 from backend.db_meta.models import Cluster, ExtraProcessInstance, Machine, ProxyInstance, Spec, StorageInstance
+from backend.db_services.dbresource.handlers import ResourceHandler
 from backend.db_services.ipchooser.query.resource import ResourceQueryHelper
 from backend.db_services.mysql.cluster.handlers import ClusterServiceHandler
 from backend.db_services.mysql.dumper.handlers import DumperHandler
@@ -61,6 +63,18 @@ def fetch_host_ids(details: Dict[str, Any]) -> List[int]:
     host_keys = ["host_id", "bk_host_id", "bk_host_ids"]
     targets = get_target_items_from_details(obj=details, match_keys=host_keys)
     return [item for item in targets if isinstance(item, int)]
+
+
+def fetch_apply_hosts(details: Dict[str, Any]) -> List[Dict]:
+    role_hosts = get_target_items_from_details(details, match_keys=["nodes"])
+    hosts = list(itertools.chain(*[h for hosts in role_hosts for h in hosts.values()]))
+    return hosts
+
+
+def fetch_recycle_hosts(details: Dict[str, Any]) -> List[Dict]:
+    role_hosts = get_target_items_from_details(details, match_keys=["old_nodes"])
+    hosts = list(itertools.chain(*[h for hosts in role_hosts for h in hosts.values()]))
+    return hosts
 
 
 def remove_useless_spec(attrs: Dict[str, Any]) -> Dict[str, Any]:
@@ -231,12 +245,10 @@ class CommonValidate(object):
     def validate_duplicate_cluster_name(cls, bk_biz_id, ticket_type, cluster_name):
         """校验是否存在重复集群名"""
 
-        from backend.ticket.builders import BuilderFactory
-
-        cluster_type = BuilderFactory.ticket_type__cluster_type.get(ticket_type, ticket_type)
-        if Cluster.objects.filter(bk_biz_id=bk_biz_id, cluster_type=cluster_type, name=cluster_name).exists():
+        cluster_types = TicketType.get_cluster_type_by_ticket(ticket_type)
+        if Cluster.objects.filter(bk_biz_id=bk_biz_id, cluster_type__in=cluster_types, name=cluster_name).exists():
             raise serializers.ValidationError(
-                _("业务{}下已经存在同类型: {}, 同名: {} 集群，请重新命名").format(bk_biz_id, cluster_type, cluster_name)
+                _("业务{}下已经存在同类型: {}, 同名: {} 集群，请重新命名").format(bk_biz_id, cluster_types, cluster_name)
             )
 
     @classmethod
@@ -417,6 +429,8 @@ class BaseTicketFlowBuilderPatchMixin(object):
     need_patch_cluster_details: bool = True
     need_patch_spec_details: bool = True
     need_patch_instance_details: bool = False
+    need_patch_recycle_host_details: bool = False
+    need_patch_recycle_cluster_details: bool = False
 
     def patch_cluster_details(self):
         """补充集群信息"""
@@ -427,9 +441,7 @@ class BaseTicketFlowBuilderPatchMixin(object):
         clusters = {
             cluster.id: {
                 **cluster.to_dict(),
-                "bk_cloud_name": cloud_info.get(str(cluster.to_dict().get("bk_cloud_id")), {}).get(
-                    "bk_cloud_name", ""
-                ),
+                "bk_cloud_name": cloud_info.get(str(cluster.bk_cloud_id), {}).get("bk_cloud_name", ""),
             }
             for cluster in Cluster.objects.filter(id__in=cluster_ids)
         }
@@ -453,6 +465,21 @@ class BaseTicketFlowBuilderPatchMixin(object):
         instances = {inst.id: inst.simple_desc for inst in StorageInstance.objects.filter(id__in=instance_ids)}
         self.ticket.details["instances"] = instances
 
+    def patch_recycle_host_details(self):
+        """补充回收主机信息，在回收类单据一定调用此方法"""
+        bk_biz_id = self.ticket.bk_biz_id
+        recycle_hosts = fetch_recycle_hosts(self.ticket.details)
+        if not recycle_hosts:
+            return
+        self.ticket.details["recycle_hosts"] = ResourceHandler.standardized_resource_host(recycle_hosts, bk_biz_id)
+
+    def patch_recycle_cluster_details(self):
+        """补充集群下架后回收主机信息，在下架类单据一定调用此方法"""
+        bk_biz_id = self.ticket.bk_biz_id
+        recycle_hosts = Cluster.get_cluster_related_machines(fetch_cluster_ids(self.ticket.details))
+        recycle_hosts = [{"bk_host_id": host.bk_host_id} for host in recycle_hosts]
+        self.ticket.details["recycle_hosts"] = ResourceHandler.standardized_resource_host(recycle_hosts, bk_biz_id)
+
     def patch_ticket_detail(self):
         if self.need_patch_cluster_details:
             self.patch_cluster_details()
@@ -460,6 +487,10 @@ class BaseTicketFlowBuilderPatchMixin(object):
             self.patch_spec_details()
         if self.need_patch_instance_details:
             self.patch_instance_details()
+        if self.need_patch_recycle_host_details:
+            self.patch_recycle_host_details()
+        if self.need_patch_recycle_cluster_details:
+            self.patch_recycle_cluster_details()
         self.ticket.save(update_fields=["details", "update_at", "remark"])
 
 

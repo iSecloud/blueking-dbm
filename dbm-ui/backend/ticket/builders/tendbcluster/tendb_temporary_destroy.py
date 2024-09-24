@@ -10,7 +10,9 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext as _
+from rest_framework import serializers
 
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import CommonValidate
@@ -23,6 +25,10 @@ from backend.ticket.models import Flow
 
 
 class TendbTemporaryDestroyDetailSerializer(TendbClustersTakeDownDetailsSerializer):
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
+
     def validate_cluster_ids(self, value):
         CommonValidate.validate_destroy_temporary_cluster_ids(value)
         return value
@@ -36,9 +42,10 @@ class TendbTemporaryDestroyFlowParamBuilder(builders.FlowParamBuilder):
     controller = SpiderController.spider_cluster_destroy_scene
 
 
-@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_TEMPORARY_DESTROY)
+@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_TEMPORARY_DESTROY, is_recycle=True)
 class TendbDestroyFlowBuilder(BaseTendbTicketFlowBuilder):
     serializer = TendbTemporaryDestroyDetailSerializer
+    need_patch_recycle_cluster_details = True
 
     def custom_ticket_flows(self):
         flows = [

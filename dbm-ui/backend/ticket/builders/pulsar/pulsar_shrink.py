@@ -15,7 +15,7 @@ from rest_framework import serializers
 
 from backend.db_meta.enums import InstanceRole
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.pulsar import PulsarController
 from backend.ticket import builders
 from backend.ticket.builders.common.bigdata import (
@@ -28,11 +28,14 @@ logger = logging.getLogger("root")
 
 
 class PulsarShrinkDetailSerializer(BigDataSingleClusterOpsDetailsSerializer):
-    ip_source = serializers.ChoiceField(help_text=_("主机来源"), choices=IpSource.get_choices())
-
     class NodesSerializer(serializers.Serializer):
         broker = serializers.ListField(help_text=_("broker信息列表"), child=serializers.DictField())
         bookkeeper = serializers.ListField(help_text=_("bookkeeper信息列表"), child=serializers.DictField())
+
+    old_nodes = serializers.JSONField(help_text=_("节点列表信息"), required=False)
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
     def validate(self, attrs):
         super().validate(attrs)
@@ -75,11 +78,13 @@ class PulsarShrinkFlowParamBuilder(builders.FlowParamBuilder):
     controller = PulsarController.pulsar_shrink_scene
 
     def format_ticket_data(self):
+        self.ticket_data["nodes"] = self.ticket_data.pop("old_nodes")
         super().format_ticket_data()
 
 
-@builders.BuilderFactory.register(TicketType.PULSAR_SHRINK)
+@builders.BuilderFactory.register(TicketType.PULSAR_SHRINK, is_recycle=True)
 class PulsarShrinkFlowBuilder(BasePulsarTicketFlowBuilder):
     serializer = PulsarShrinkDetailSerializer
     inner_flow_builder = PulsarShrinkFlowParamBuilder
     inner_flow_name = _("Pulsar 集群缩容")
+    need_patch_recycle_host_details = True

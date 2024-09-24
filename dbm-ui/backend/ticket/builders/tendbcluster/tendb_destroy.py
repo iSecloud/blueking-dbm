@@ -10,8 +10,10 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
 from backend.ticket.builders.tendbcluster.base import (
@@ -22,16 +24,19 @@ from backend.ticket.constants import TicketType
 
 
 class TendbDestroyDetailSerializer(TendbClustersTakeDownDetailsSerializer):
-    pass
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
 
 class TendbDestroyFlowParamBuilder(builders.FlowParamBuilder):
     controller = SpiderController.spider_cluster_destroy_scene
 
 
-@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_DESTROY, phase=ClusterPhase.DESTROY)
+@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_DESTROY, phase=ClusterPhase.DESTROY, is_recycle=True)
 class TendbDestroyFlowBuilder(BaseTendbTicketFlowBuilder):
 
     serializer = TendbDestroyDetailSerializer
     inner_flow_builder = TendbDestroyFlowParamBuilder
     inner_flow_name = _("TenDB Cluster 下架执行")
+    need_patch_recycle_cluster_details = True

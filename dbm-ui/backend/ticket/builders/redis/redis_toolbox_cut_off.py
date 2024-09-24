@@ -9,13 +9,14 @@ an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express o
 specific language governing permissions and limitations under the License.
 """
 import itertools
+from collections import defaultdict
 
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import InstanceRole
 from backend.db_meta.models import Cluster, StorageInstance
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.redis import RedisController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import BaseOperateResourceParamBuilder, SkipToRepresentationMixin
@@ -30,6 +31,7 @@ class RedisClusterCutOffDetailSerializer(SkipToRepresentationMixin, ClusterValid
         class HostInfoSerializer(serializers.Serializer):
             ip = serializers.IPAddressField()
             spec_id = serializers.IntegerField()
+            bk_host_id = serializers.IntegerField()
 
         cluster_ids = serializers.ListField(help_text=_("集群列表"), child=serializers.IntegerField())
         bk_cloud_id = serializers.IntegerField(help_text=_("云区域ID"))
@@ -38,7 +40,12 @@ class RedisClusterCutOffDetailSerializer(SkipToRepresentationMixin, ClusterValid
         redis_slave = serializers.ListField(help_text=_("slave列表"), child=HostInfoSerializer(), required=False)
         resource_spec = serializers.JSONField(required=False, help_text=_("资源申请信息(前端不用传递，后台渲染)"))
 
-    ip_source = serializers.ChoiceField(help_text=_("主机来源"), choices=IpSource.get_choices())
+    ip_source = serializers.ChoiceField(
+        help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
     infos = serializers.ListField(help_text=_("批量操作参数列表"), child=InfoSerializer())
 
 
@@ -46,6 +53,7 @@ class RedisClusterCutOffParamBuilder(builders.FlowParamBuilder):
     controller = RedisController.redis_cluster_cutoff_scene
 
     def format_ticket_data(self):
+        self.ticket_data.pop("old_nodes")
         super().format_ticket_data()
 
 
@@ -88,24 +96,23 @@ class RedisClusterCutOffResourceParamBuilder(BaseOperateResourceParamBuilder):
         super().post_callback()
 
 
-@builders.BuilderFactory.register(TicketType.REDIS_CLUSTER_CUTOFF, is_apply=True)
+@builders.BuilderFactory.register(TicketType.REDIS_CLUSTER_CUTOFF, is_apply=True, is_recycle=True)
 class RedisClusterCutOffFlowBuilder(BaseRedisTicketFlowBuilder):
     serializer = RedisClusterCutOffDetailSerializer
     inner_flow_builder = RedisClusterCutOffParamBuilder
     inner_flow_name = _("整机替换")
     resource_batch_apply_builder = RedisClusterCutOffResourceParamBuilder
+    need_patch_recycle_host_details = True
 
-    def patch_ticket_detail(self):
-        """redis_master -> backend_group"""
-
-        super().patch_ticket_detail()
-
-        resource_spec = {}
+    def patch_resource_and_old_nodes(self):
         cluster_ids = list(itertools.chain(*[infos["cluster_ids"] for infos in self.ticket.details["infos"]]))
-        id__cluster = {cluster.id: cluster for cluster in Cluster.objects.filter(id__in=cluster_ids)}
+        cluster_map = {cluster.id: cluster for cluster in Cluster.objects.filter(id__in=cluster_ids)}
+        old_nodes = defaultdict(list)
+        resource_spec = {}
+
         for info in self.ticket.details["infos"]:
             # 取第一个cluster即可，即使是多集群，也是单机多实例的情况
-            cluster = id__cluster[info["cluster_ids"][0]]
+            cluster = cluster_map[info["cluster_ids"][0]]
             for role in [
                 InstanceRole.REDIS_MASTER.value,
                 InstanceRole.REDIS_PROXY.value,
@@ -116,21 +123,35 @@ class RedisClusterCutOffFlowBuilder(BaseRedisTicketFlowBuilder):
                 if not role_hosts:
                     continue
 
-                if role in [InstanceRole.REDIS_MASTER.value, InstanceRole.REDIS_PROXY.value]:
-                    # 如果替换角色是master，则是master/slave成对替换
-                    resource_role = "backend_group" if role == InstanceRole.REDIS_MASTER.value else role
-                    resource_spec[resource_role] = {
+                old_nodes[role].extend(role_hosts)
+
+                # 如果是proxy，则至少跨两个机房
+                if role == InstanceRole.REDIS_PROXY.value:
+                    resource_spec[role] = {
                         "spec_id": info[role][0]["spec_id"],
                         "count": len(role_hosts),
                         "location_spec": {"city": cluster.region, "sub_zone_ids": []},
                         "affinity": cluster.disaster_tolerance_level,
                     }
-                    # 如果是proxy，则至少跨两个机房
-                    if role == InstanceRole.REDIS_PROXY.value:
-                        resource_spec[resource_role].update(group_count=2)
+                    resource_spec[role].update(group_count=2)
+                # 如果替换角色是master，则是master/slave成对替换
+                elif role == InstanceRole.REDIS_MASTER.value:
+                    resource_spec["backend_group"] = {
+                        "spec_id": info[role][0]["spec_id"],
+                        "count": len(role_hosts),
+                        "location_spec": {"city": cluster.region, "sub_zone_ids": []},
+                        "affinity": cluster.disaster_tolerance_level,
+                    }
+                    # 因为是成对替换，所以要把slave加入old nodes
+                    redis_masters = StorageInstance.objects.prefetch_related("as_ejector__receiver", "machine").filter(
+                        cluster=cluster, machine__ip__in=[host["ip"] for host in role_hosts]
+                    )
+                    for master in redis_masters:
+                        slave = master.as_ejector.get().receiver.machine
+                        old_nodes[InstanceRole.REDIS_SLAVE].append({"ip": slave.ip, "bk_host_id": slave.bk_host_id})
+                # 如果是替换slave， 需要和当前集群中的配对的 master 不同机房
                 elif role == InstanceRole.REDIS_SLAVE.value:
-                    # 如果是替换slave， 需要和当前集群中的配对的 master 不同机房
-                    redis_slaves = StorageInstance.objects.prefetch_related("as_receiver", "machine").filter(
+                    redis_slaves = StorageInstance.objects.prefetch_related("as_receiver__ejector", "machine").filter(
                         cluster=cluster, machine__ip__in=[host["ip"] for host in role_hosts]
                     )
                     ip__redis_slave = {slave.machine.ip: slave for slave in redis_slaves}
@@ -146,6 +167,9 @@ class RedisClusterCutOffFlowBuilder(BaseRedisTicketFlowBuilder):
                             },
                         }
 
-            info["resource_spec"] = resource_spec
+            info.update(resource_spec=resource_spec, old_nodes=old_nodes)
 
-        self.ticket.save(update_fields=["details"])
+    def patch_ticket_detail(self):
+        """redis_master -> backend_group"""
+        self.patch_resource_and_old_nodes()
+        super().patch_ticket_detail()

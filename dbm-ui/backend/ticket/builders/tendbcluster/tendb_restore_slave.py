@@ -15,7 +15,7 @@ from rest_framework import serializers
 from backend.configuration.constants import AffinityEnum
 from backend.db_meta.enums import ClusterType
 from backend.db_meta.models import StorageInstance
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
 from backend.ticket.builders.common.base import BaseOperateResourceParamBuilder, HostInfoSerializer
@@ -28,13 +28,19 @@ from backend.utils.basic import get_target_items_from_details
 
 class TendbClusterRestoreSlaveDetailSerializer(MysqlRestoreSlaveDetailSerializer):
     class RestoreInfoSerializer(serializers.Serializer):
-        old_slave = HostInfoSerializer(help_text=_("旧从库 IP"))
+        class OldSlaveSerializer(serializers.Serializer):
+            old_slave = serializers.ListSerializer(child=HostInfoSerializer(help_text=_("旧从库 IP")))
+
         new_slave = HostInfoSerializer(help_text=_("新从库 IP"), required=False)
+        old_nodes = OldSlaveSerializer(help_text=_("旧从库信息"))
         resource_spec = serializers.JSONField(help_text=_("新从库资源池参数"), required=False)
         cluster_id = serializers.IntegerField(help_text=_("集群ID"))
 
     ip_source = serializers.ChoiceField(
         help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.MANUAL_INPUT
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
     )
     backup_source = serializers.ChoiceField(help_text=_("备份源"), choices=MySQLBackupSource.get_choices())
     infos = serializers.ListField(help_text=_("集群重建信息"), child=RestoreInfoSerializer())
@@ -100,9 +106,10 @@ class TendbClusterRestoreSlaveResourceParamBuilder(BaseOperateResourceParamBuild
         next_flow.save(update_fields=["details"])
 
 
-@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_RESTORE_SLAVE, is_apply=True)
+@builders.BuilderFactory.register(TicketType.TENDBCLUSTER_RESTORE_SLAVE, is_apply=True, is_recycle=True)
 class TendbClusterRestoreSlaveFlowBuilder(BaseTendbTicketFlowBuilder):
     serializer = TendbClusterRestoreSlaveDetailSerializer
     inner_flow_builder = TendbClusterRestoreSlaveParamBuilder
     inner_flow_name = _("TenDB Cluster Slave重建")
     resource_batch_apply_builder = TendbClusterRestoreSlaveResourceParamBuilder
+    need_patch_recycle_host_details = True

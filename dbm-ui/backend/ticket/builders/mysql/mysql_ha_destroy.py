@@ -10,10 +10,12 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
+from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
 from backend.db_meta.enums.extra_process_type import ExtraProcessType
 from backend.db_meta.models.extra_process import ExtraProcessInstance
+from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.mysql import MySQLController
 from backend.flow.engine.controller.tbinlogdumper import TBinlogDumperController
 from backend.iam_app.dataclass.actions import ActionEnum
@@ -25,7 +27,9 @@ from backend.ticket.models import Flow
 
 
 class MysqlHADestroyDetailSerializer(MySQLClustersTakeDownDetailsSerializer):
-    pass
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
 
 class MysqlHADestroyFlowParamBuilder(builders.FlowParamBuilder):
@@ -41,7 +45,7 @@ class MysqlDumperDestroyParamBuilder(builders.FlowParamBuilder):
 
 
 @builders.BuilderFactory.register(
-    TicketType.MYSQL_HA_DESTROY, phase=ClusterPhase.DESTROY, iam=ActionEnum.MYSQL_DESTROY
+    TicketType.MYSQL_HA_DESTROY, phase=ClusterPhase.DESTROY, iam=ActionEnum.MYSQL_DESTROY, is_recycle=True
 )
 class MysqlHaDestroyFlowBuilder(BaseMySQLHATicketFlowBuilder):
     """Mysql下架流程的构建基类"""
@@ -51,6 +55,7 @@ class MysqlHaDestroyFlowBuilder(BaseMySQLHATicketFlowBuilder):
     inner_flow_name = _("MySQL高可用销毁执行")
     dumper_flow_builder = MysqlDumperDestroyParamBuilder
     retry_type = FlowRetryType.MANUAL_RETRY
+    need_patch_recycle_cluster_details = True
 
     def cluster_dumper_destroy(self):
         cluster_ids = self.ticket.details["cluster_ids"]

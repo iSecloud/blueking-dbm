@@ -14,7 +14,7 @@ from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterType
 from backend.db_meta.models import Cluster, Machine
-from backend.db_services.dbbase.constants import IpSource
+from backend.db_services.dbbase.constants import IpDest, IpSource
 from backend.flow.engine.controller.sqlserver import SqlserverController
 from backend.flow.utils.sqlserver.sqlserver_bk_config import get_module_infos
 from backend.ticket import builders
@@ -31,13 +31,21 @@ from backend.utils.basic import get_target_items_from_details
 
 class SQLServerRestoreSlaveDetailSerializer(SQLServerBaseOperateDetailSerializer):
     class SlaveInfoSerializer(serializers.Serializer):
+        class OldSlaveSerializer(serializers.Serializer):
+            old_slave_host = serializers.ListSerializer(child=HostInfoSerializer())
+
         cluster_ids = serializers.ListField(help_text=_("集群列表"), child=serializers.IntegerField())
         resource_spec = serializers.JSONField(help_text=_("资源池规格"), required=False)
-        old_slave_host = HostInfoSerializer(help_text=_("旧slave机器信息"))
+        old_nodes = OldSlaveSerializer(help_text=_("旧slave机器信息"))
         new_slave_host = HostInfoSerializer(help_text=_("新slave机器信息"), required=False)
 
     infos = serializers.ListField(help_text=_("重建从库列表"), child=SlaveInfoSerializer())
-    ip_source = serializers.ChoiceField(help_text=_("主机来源"), choices=IpSource.get_choices())
+    ip_source = serializers.ChoiceField(
+        help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL
+    )
+    ip_dest = serializers.ChoiceField(
+        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
+    )
 
     def validate(self, attrs):
         # 校验实例的角色为slave
@@ -56,10 +64,9 @@ class SQLServerRestoreSlaveFlowParamBuilder(builders.FlowParamBuilder):
     controller = SqlserverController.slave_rebuild_in_new_slave_scene
 
     def format_ticket_data(self):
-        pass
-        # for info in self.ticket_data["infos"]:
-        #     info["slave_host"] = info.pop("slave")
-        #     info["port"] = info["slave_host"].pop("port")
+        for info in self.ticket_data["infos"]:
+            old_nodes = info.pop("old_nodes")
+            info["old_slave_host"] = old_nodes["old_slave_host"][0]
 
 
 class SQLServerRestoreSlaveResourceParamBuilder(SQLServerBaseOperateResourceParamBuilder):
@@ -109,12 +116,13 @@ class SQLServerRestoreSlaveResourceParamBuilder(SQLServerBaseOperateResourcePara
         next_flow.save(update_fields=["details"])
 
 
-@builders.BuilderFactory.register(TicketType.SQLSERVER_RESTORE_SLAVE)
+@builders.BuilderFactory.register(TicketType.SQLSERVER_RESTORE_SLAVE, is_recycle=True)
 class SQLServerRestoreSlaveFlowBuilder(BaseSQLServerHATicketFlowBuilder):
     serializer = SQLServerRestoreSlaveDetailSerializer
     resource_batch_apply_builder = SQLServerRestoreSlaveResourceParamBuilder
     inner_flow_builder = SQLServerRestoreSlaveFlowParamBuilder
     inner_flow_name = _("SQLServer Slave重建执行")
+    need_patch_recycle_host_details = True
 
     def patch_ticket_detail(self):
         # 补充数据库版本和字符集

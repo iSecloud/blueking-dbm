@@ -20,6 +20,7 @@ from backend.db_meta.enums import ClusterType, MachineType
 from backend.db_meta.models import Spec
 from backend.db_services.dbresource.enmus import DeployPlanChangeType
 from backend.db_services.dbresource.exceptions import SpecOperateException
+from backend.db_services.ipchooser.query.resource import ResourceQueryHelper
 
 
 class ClusterSpecFilter(object):
@@ -433,3 +434,20 @@ class ResourceHandler(object):
         spec_apply_count = DBResourceApi.apply_count(params=spec_count_params)
         spec_apply_count = {k.split("_")[0]: v for k, v in spec_apply_count.items()}
         return spec_apply_count
+
+    @classmethod
+    def standardized_resource_host(cls, hosts, bk_biz_id=None):
+        """标准化主机信息，将cc字段统一成资源池字段"""
+        host_ids = [host["bk_host_id"] for host in hosts]
+        hosts = ResourceQueryHelper.search_cc_hosts(role_host_ids=host_ids, bk_biz_id=bk_biz_id)
+        for host in hosts:
+            host.update(
+                bk_biz_id=bk_biz_id,
+                ip=host.get("bk_host_innerip"),
+                city=host.get("idc_city_name"),
+                host_id=host.get("bk_host_id"),
+                os_name=host.get("bk_os_name"),
+                os_type=host.get("bk_os_type"),
+                device_class=host.get("svr_device_class"),
+            )
+        return hosts
