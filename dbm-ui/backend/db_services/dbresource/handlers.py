@@ -45,25 +45,6 @@ class ClusterSpecFilter(object):
             )
         ]
 
-        if (
-            spec_machine_type
-            in [SpecMachineType.TendisPredixyRedisCluster, SpecMachineType.TendisPredixyTendisplusCluster]
-            and old_spec_id != 0
-        ):
-            spec_old = Spec.objects.get(
-                spec_machine_type=spec_machine_type,
-                spec_cluster_type=spec_cluster_type,
-                enable=True,
-                spec_id=old_spec_id,
-            )
-            self.specs.append(
-                {
-                    **model_to_dict(spec_old),
-                    "capacity": spec_old.capacity,
-                    "change_type": DeployPlanChangeType.inplace_change.value,
-                }
-            )
-
     def calc_machine_pair(self):
         """计算每种规格所需的机器组数和集群总容量: 目标容量 / 规格容量"""
         for spec in self.specs:
@@ -259,7 +240,6 @@ class RedisClusterSpecFilter(RedisSpecFilter):
                 avaiable_specs.append(self.specs[spec_cnt - 2])
 
         for spec_new in avaiable_specs:
-
             # 一定要保证集群总分片数是机器组数的整数倍，
             cluster_shard_num = math.ceil(max_capcity / instance_cap)
             single_machine_shard_num = math.ceil(cluster_shard_num / spec_new["machine_pair"])

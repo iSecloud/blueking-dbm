@@ -21,11 +21,13 @@ class SpecMachineType(str, StructuredEnum):
     PROXY = EnumField("proxy", _("proxy"))
     BACKEND = EnumField("backend", _("backend"))
 
-    TendisPredixyRedisCluster = EnumField("PredixyRedisCluster", _("RedisCluster集群"))
-    TendisPredixyTendisplusCluster = EnumField("PredixyTendisplusCluster", _("Tendisplus存储版集群"))
+    # redis主从、redis集群的后端规格同tendis cache一致
     TendisTwemproxyRedisInstance = EnumField("TwemproxyRedisInstance", _("TendisCache集群"))
+    TendisPredixyTendisplusCluster = EnumField("PredixyTendisplusCluster", _("Tendisplus存储版集群"))
     TwemproxyTendisSSDInstance = EnumField("TwemproxyTendisSSDInstance", _("TendisSSD集群"))
-    TendisRedisInstance = EnumField("RedisInstance", _("RedisCache主从版"))
+
+    # RedisCluster这个Key不参与规格过滤，只在部署方案的时候生效
+    TendisPredixyRedisCluster = EnumField("PredixyRedisCluster", _("RedisCluster集群"))
 
     ES_DATANODE = EnumField("es_datanode", _("es_datanode"))
     ES_MASTER = EnumField("es_master", _("es_master"))
@@ -78,11 +80,11 @@ def migrate_spec():
             MachineType.PREDIXY: SpecMachineType.PROXY,
         },
         ClusterType.TendisPredixyRedisCluster: {
-            MachineType.TENDISCACHE: SpecMachineType.TendisPredixyRedisCluster,
+            MachineType.TENDISCACHE: SpecMachineType.TendisTwemproxyRedisInstance,
             MachineType.PREDIXY: SpecMachineType.PROXY,
         },
         ClusterType.TendisRedisInstance: {
-            MachineType.TENDISCACHE: SpecMachineType.TendisRedisInstance,
+            MachineType.TENDISCACHE: SpecMachineType.TendisTwemproxyRedisInstance,
         },
         MachineType.SQLSERVER_HA: SpecMachineType.SQLSERVER,
         MachineType.SQLSERVER_SINGLE: SpecMachineType.SQLSERVER,

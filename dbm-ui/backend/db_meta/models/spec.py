@@ -72,11 +72,7 @@ class Spec(AuditedModel):
         ]:
             return mount_point__size.get("/data1") or mount_point__size["/data"] / 2
 
-        if self.spec_machine_type in [
-            SpecMachineType.TendisTwemproxyRedisInstance,
-            SpecMachineType.TendisRedisInstance,  # ??????
-            SpecMachineType.TendisPredixyRedisCluster,
-        ]:
+        if self.spec_machine_type in [SpecMachineType.TendisTwemproxyRedisInstance]:
             # 取规格内存平均值
             return (self.mem["min"] + self.mem["max"]) / 2
 
