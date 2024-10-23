@@ -16,9 +16,9 @@ from rest_framework import serializers
 
 from backend.db_meta.enums import InstanceRole
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.es import EsController
 from backend.ticket import builders
+from backend.ticket.builders.common.base import HostRecycleSerializer
 from backend.ticket.builders.common.bigdata import BaseEsTicketFlowBuilder, BigDataSingleClusterOpsDetailsSerializer
 from backend.ticket.constants import TicketType
 
@@ -33,9 +33,7 @@ class EsShrinkDetailSerializer(BigDataSingleClusterOpsDetailsSerializer):
         client = serializers.ListField(help_text=_("client信息列表"), child=serializers.DictField())
 
     old_nodes = NodesSerializer(help_text=_("nodes节点列表"))
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
     def validate(self, attrs):
         super().validate(attrs)

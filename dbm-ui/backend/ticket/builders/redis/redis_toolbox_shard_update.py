@@ -14,11 +14,11 @@ from rest_framework import serializers
 
 from backend.configuration.constants import AffinityEnum
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpDest, IpSource
+from backend.db_services.dbbase.constants import IpSource
 from backend.db_services.version.utils import query_versions_by_key
 from backend.flow.engine.controller.redis import RedisController
 from backend.ticket import builders
-from backend.ticket.builders.common.base import SkipToRepresentationMixin
+from backend.ticket.builders.common.base import HostRecycleSerializer, SkipToRepresentationMixin
 from backend.ticket.builders.redis.base import (
     BaseRedisTicketFlowBuilder,
     ClusterValidateMixin,
@@ -82,9 +82,7 @@ class RedisShardUpdateDetailSerializer(SkipToRepresentationMixin, serializers.Se
     ip_source = serializers.ChoiceField(
         help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL
     )
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
     infos = serializers.ListField(help_text=_("批量操作参数列表"), child=InfoSerializer(), allow_empty=False)
 
 

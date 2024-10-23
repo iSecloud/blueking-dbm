@@ -10,12 +10,11 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
-from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
+from backend.ticket.builders.common.base import HostRecycleSerializer
 from backend.ticket.builders.tendbcluster.base import (
     BaseTendbTicketFlowBuilder,
     TendbClustersTakeDownDetailsSerializer,
@@ -24,9 +23,7 @@ from backend.ticket.constants import TicketType
 
 
 class TendbDestroyDetailSerializer(TendbClustersTakeDownDetailsSerializer):
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
 
 class TendbDestroyFlowParamBuilder(builders.FlowParamBuilder):

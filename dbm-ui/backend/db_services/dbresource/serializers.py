@@ -43,7 +43,7 @@ class ResourceImportSerializer(serializers.Serializer):
     resource_type = serializers.CharField(help_text=_("专属DB"), allow_blank=True, allow_null=True)
     bk_biz_id = serializers.IntegerField(help_text=_("机器当前所属的业务id	"), default=env.DBA_APP_BK_BIZ_ID)
     hosts = serializers.ListSerializer(help_text=_("主机"), child=HostInfoSerializer())
-    labels = serializers.DictField(help_text=_("标签信息"), required=False)
+    labels = serializers.CharField(help_text=_("标签列表id"), required=False)
 
 
 class ResourceApplySerializer(serializers.Serializer):
@@ -90,7 +90,7 @@ class ResourceListSerializer(serializers.Serializer):
     spec_id = serializers.IntegerField(help_text=_("过滤的规格ID"), required=False)
 
     agent_status = serializers.BooleanField(help_text=_("agent状态"), required=False)
-    labels = serializers.DictField(help_text=_("标签信息"), required=False)
+    labels = serializers.CharField(help_text=_("标签列表id"), required=False)
 
     limit = serializers.IntegerField(help_text=_("单页数量"))
     offset = serializers.IntegerField(help_text=_("偏移量"))

@@ -224,7 +224,11 @@ class Ticket(AuditedModel):
         # 创建回收单据流程
         from backend.ticket.builders.common.base import fetch_apply_hosts
 
-        details = {"recycle_hosts": fetch_apply_hosts(ticket.details), "ip_dest": ip_dest, "group": ticket.group}
+        details = {
+            "recycle_hosts": fetch_apply_hosts(ticket.details),
+            "ip_recycle": {"ip_dest": ip_dest, "for_biz": ticket.bk_biz_id},
+            "group": ticket.group,
+        }
         recycle_ticket = cls.create_ticket(
             ticket_type=TicketType.RECYCLE_HOST,
             creator=ticket.creator,
@@ -238,7 +242,7 @@ class Ticket(AuditedModel):
             ticket=ticket,
             flow_type=FlowType.HOST_RECYCLE_DELIVERY.value,
             details={"recycle_ticket": recycle_ticket.id},
-            flow_alias=_("主机清理释放"),
+            flow_alias=_("原主机清理释放"),
         )
 
         return recycle_ticket

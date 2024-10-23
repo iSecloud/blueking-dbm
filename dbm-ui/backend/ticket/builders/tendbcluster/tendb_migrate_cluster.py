@@ -12,10 +12,14 @@ specific language governing permissions and limitations under the License.
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from backend.db_services.dbbase.constants import IpDest, IpSource
+from backend.db_services.dbbase.constants import IpSource
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
-from backend.ticket.builders.common.base import BaseOperateResourceParamBuilder, HostInfoSerializer
+from backend.ticket.builders.common.base import (
+    BaseOperateResourceParamBuilder,
+    HostInfoSerializer,
+    HostRecycleSerializer,
+)
 from backend.ticket.builders.common.constants import MySQLBackupSource
 from backend.ticket.builders.tendbcluster.base import BaseTendbTicketFlowBuilder, TendbBaseOperateDetailSerializer
 from backend.ticket.constants import FlowRetryType, TicketType
@@ -36,9 +40,7 @@ class TendbClusterMigrateClusterDetailSerializer(TendbBaseOperateDetailSerialize
     ip_source = serializers.ChoiceField(
         help_text=_("机器来源"), choices=IpSource.get_choices(), required=False, default=IpSource.MANUAL_INPUT
     )
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
     infos = serializers.ListSerializer(help_text=_("克隆主从信息"), child=MigrateClusterInfoSerializer())
     backup_source = serializers.ChoiceField(
         help_text=_("备份源"), choices=MySQLBackupSource.get_choices(), default=MySQLBackupSource.REMOTE

@@ -10,20 +10,17 @@ specific language governing permissions and limitations under the License.
 """
 
 from django.utils.translation import ugettext_lazy as _
-from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
-from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.sqlserver import SqlserverController
 from backend.ticket import builders
+from backend.ticket.builders.common.base import HostRecycleSerializer
 from backend.ticket.builders.sqlserver.base import BaseSQLServerTicketFlowBuilder, SQLServerTakeDownDetailsSerializer
 from backend.ticket.constants import FlowRetryType, TicketType
 
 
 class SQLServerDestroyDetailSerializer(SQLServerTakeDownDetailsSerializer):
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
 
 class SQLServerDestroyFlowParamBuilder(builders.FlowParamBuilder):

@@ -20,12 +20,13 @@ from backend.db_meta.enums import ClusterType
 from backend.db_meta.enums.cluster_phase import ClusterPhase
 from backend.db_meta.models.cluster import Cluster
 from backend.db_meta.models.instance import StorageInstance
-from backend.db_services.dbbase.constants import IpDest, IpSource
+from backend.db_services.dbbase.constants import IpSource
 from backend.ticket.builders import BuilderFactory, TicketFlowBuilder
 from backend.ticket.builders.common.base import (
     BaseOperateResourceParamBuilder,
     BigDataTicketFlowBuilderPatchMixin,
     CommonValidate,
+    HostRecycleSerializer,
     InfluxdbTicketFlowBuilderPatchMixin,
     format_bigdata_resource_spec,
 )
@@ -188,9 +189,7 @@ class BigDataReplaceDetailSerializer(BigDataSingleClusterOpsDetailsSerializer):
     ip_source = serializers.ChoiceField(
         help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL
     )
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
     def validate(self, attrs):
         # 校验替换前后角色类型和数量一致

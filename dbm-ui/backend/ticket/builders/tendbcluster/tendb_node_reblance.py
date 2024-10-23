@@ -13,9 +13,10 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpDest, IpSource
+from backend.db_services.dbbase.constants import IpSource
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
+from backend.ticket.builders.common.base import HostRecycleSerializer
 from backend.ticket.builders.common.constants import MySQLBackupSource
 from backend.ticket.builders.common.field import DBTimezoneField
 from backend.ticket.builders.tendbcluster.base import (
@@ -44,9 +45,7 @@ class TendbNodeRebalanceDetailSerializer(TendbBaseOperateDetailSerializer):
     ip_source = serializers.ChoiceField(
         help_text=_("主机来源"), choices=IpSource.get_choices(), default=IpSource.RESOURCE_POOL.value
     )
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
     need_checksum = serializers.BooleanField(help_text=_("执行前是否需要数据校验"))
     trigger_checksum_type = serializers.ChoiceField(help_text=_("数据校验触发类型"), choices=TriggerChecksumType.get_choices())
     trigger_checksum_time = DBTimezoneField(help_text=_("数据校验 触发时间"))

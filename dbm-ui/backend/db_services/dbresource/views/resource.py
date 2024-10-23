@@ -99,9 +99,7 @@ class DBResourceViewSet(viewsets.SystemViewSet):
         responses={status.HTTP_200_OK: ResourceListResponseSerializer()},
         tags=[SWAGGER_TAG],
     )
-    @action(
-        detail=False, methods=["POST"], url_path="list", serializer_class=ResourceListSerializer, pagination_class=None
-    )
+    @action(detail=False, methods=["POST"], url_path="list", serializer_class=ResourceListSerializer)
     @Permission.decorator_external_permission_field(
         param_field=lambda d: None,
         actions=[ActionEnum.RESOURCE_POLL_MANAGE],

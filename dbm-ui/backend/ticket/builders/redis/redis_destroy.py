@@ -12,10 +12,9 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterPhase
-from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.redis import RedisController
 from backend.ticket import builders
-from backend.ticket.builders.common.base import SkipToRepresentationMixin
+from backend.ticket.builders.common.base import HostRecycleSerializer, SkipToRepresentationMixin
 from backend.ticket.builders.redis.base import (
     BaseRedisInstanceTicketFlowBuilder,
     BaseRedisTicketFlowBuilder,
@@ -26,9 +25,7 @@ from backend.ticket.constants import TicketType
 
 
 class RedisDestroyDetailSerializer(RedisSingleOpsBaseDetailSerializer):
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
 
 class RedisDestroyFlowParamBuilder(builders.FlowParamBuilder):

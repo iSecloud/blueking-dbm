@@ -8,18 +8,9 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from django.utils.translation import gettext_lazy as _
-
-from backend.db_meta.models import Cluster, Machine
-from blue_krill.data_types.enum import EnumField, StructuredEnum
 
 
-class TagResourceType(str, StructuredEnum):
-    DB_RESOURCE = EnumField("resource", _("资源池"))
-    CLUSTER = EnumField("cluster", _("集群"))
-
-
-TAG_RELATED_RESOURCE_DISPLAY_FIELD = {
-    TagResourceType.CLUSTER: Cluster.immute_domain.field.name,
-    TagResourceType.DB_RESOURCE: Machine.ip.field.name,
-}
+RELATED_RESOURCE_DATA = [
+    {"id": 1, "related_resources": [{"id": 15, "display": "127.0.0.1"}, {"id": 16, "display": "127.0.0.2"}]},
+    {"id": 2, "related_resources": [{"id": 15, "display": "127.0.0.1"}, {"id": 16, "display": "127.0.0.2"}]},
+]

@@ -277,11 +277,11 @@ class RecycleParamBuilder(FlowParamBuilder):
 
     def __init__(self, ticket: Ticket):
         super().__init__(ticket)
-        self.ip_dest = self.ticket_data.get("ip_dest")
+        self.ip_dest = self.ticket_data["ip_recycle"]["ip_dest"]
         assert self.ip_dest is not None
 
     def format_ticket_data(self):
-        self.ticket_data = {"recycle_hosts": self.ticket_data["recycle_hosts"], "ip_dest": self.ticket_data["ip_dest"]}
+        self.ticket_data = {"recycle_hosts": self.ticket_data["recycle_hosts"], "ip_dest": self.ip_dest}
         self.add_common_params()
 
     def post_callback(self):
@@ -310,11 +310,12 @@ class ReImportResourceParamBuilder(FlowParamBuilder):
         recycle_hosts = self.ticket_data["recycle_hosts"]
         self.ticket_data = {
             "ticket_id": self.ticket.id,
-            "for_biz": self.ticket.bk_biz_id,
+            "for_biz": self.ticket_data["ip_recycle"]["for_biz"],
             "resource_type": self.ticket.group,
             "os_type": recycle_hosts[0]["bk_os_type"],
             "hosts": recycle_hosts,
             "operator": self.ticket.creator,
+            # 标记为退回
             "return_resource": True,
         }
         self.add_common_params()
@@ -415,7 +416,7 @@ class TicketFlowBuilder:
     @property
     def need_recycle(self):
         """是否回收主机"""
-        return self.ticket.details.get("ip_dest")
+        return self.ticket.details.get("ip_recycle", {}).get("ip_dest")
 
     def custom_ticket_flows(self):
         return []
@@ -492,7 +493,7 @@ class TicketFlowBuilder:
                     ticket=self.ticket,
                     flow_type=FlowType.HOST_RECYCLE.value,
                     details=self.recycle_flow_builder(self.ticket).get_params(),
-                    flow_alias=_("主机清理释放"),
+                    flow_alias=_("原主机清理释放"),
                 ),
             )
 
@@ -503,7 +504,7 @@ class TicketFlowBuilder:
                     ticket=self.ticket,
                     flow_type=FlowType.HOST_IMPORT_RESOURCE.value,
                     details=self.import_resource_flow_builder(self.ticket).get_params(),
-                    flow_alias=_("主机回收到资源池"),
+                    flow_alias=_("原主机回收到资源池"),
                 ),
             )
 

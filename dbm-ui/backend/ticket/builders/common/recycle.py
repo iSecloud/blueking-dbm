@@ -17,6 +17,7 @@ from backend.db_services.dbbase.constants import IpDest
 from backend.db_services.dbresource.handlers import ResourceHandler
 from backend.ticket import builders
 from backend.ticket.builders import RecycleParamBuilder, ReImportResourceParamBuilder, TicketFlowBuilder
+from backend.ticket.builders.common.base import HostRecycleSerializer
 from backend.ticket.constants import FlowType, TicketType
 from backend.ticket.models import Flow
 
@@ -25,7 +26,7 @@ logger = logging.getLogger("root")
 
 class RecycleHostDetailSerializer(serializers.Serializer):
     recycle_hosts = serializers.JSONField(help_text=_("机器回收信息"))
-    ip_dest = serializers.ChoiceField(help_text=_("主机流向"), choices=IpDest.get_choices())
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收流向"))
 
 
 class RecycleHostResourceParamBuilder(ReImportResourceParamBuilder):
@@ -55,17 +56,15 @@ class RecycleHostFlowBuilder(TicketFlowBuilder):
                 ticket=self.ticket,
                 flow_type=FlowType.HOST_RECYCLE.value,
                 details=self.recycle_flow_builder(self.ticket).get_params(),
-                flow_alias=_("主机清理释放"),
             ),
         ]
         # 导入资源池
-        if self.ticket.details["ip_dest"] == IpDest.Resource:
+        if self.ticket.details["ip_recycle"]["ip_dest"] == IpDest.Resource:
             flows.append(
                 Flow(
                     ticket=self.ticket,
                     flow_type=FlowType.HOST_IMPORT_RESOURCE.value,
                     details=self.import_resource_flow_builder(self.ticket).get_params(),
-                    flow_alias=_("主机回收到资源池"),
                 ),
             )
 

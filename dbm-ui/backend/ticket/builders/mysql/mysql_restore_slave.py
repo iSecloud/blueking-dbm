@@ -13,10 +13,9 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.enums import ClusterType, InstanceInnerRole
-from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.controller.mysql import MySQLController
 from backend.ticket import builders
-from backend.ticket.builders.common.base import HostInfoSerializer, InstanceInfoSerializer
+from backend.ticket.builders.common.base import HostInfoSerializer, HostRecycleSerializer, InstanceInfoSerializer
 from backend.ticket.builders.common.constants import MySQLBackupSource
 from backend.ticket.builders.mysql.base import BaseMySQLHATicketFlowBuilder, MySQLBaseOperateDetailSerializer
 from backend.ticket.constants import TicketType
@@ -33,9 +32,7 @@ class MysqlRestoreSlaveDetailSerializer(MySQLBaseOperateDetailSerializer):
 
     backup_source = serializers.ChoiceField(help_text=_("备份源"), choices=MySQLBackupSource.get_choices())
     infos = serializers.ListField(help_text=_("集群重建信息"), child=RestoreInfoSerializer())
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
     def validate(self, attrs):
         # 校验集群是否可用，集群类型为高可用

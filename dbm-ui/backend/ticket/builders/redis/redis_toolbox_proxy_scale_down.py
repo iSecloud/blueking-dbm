@@ -13,11 +13,15 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from backend.db_meta.models import Cluster
-from backend.db_services.dbbase.constants import IpDest
 from backend.flow.engine.bamboo.scene.redis.redis_proxy_scale import RedisProxyScaleFlow
 from backend.flow.engine.controller.redis import RedisController
 from backend.ticket import builders
-from backend.ticket.builders.common.base import HostInfoSerializer, SkipToRepresentationMixin, fetch_cluster_ids
+from backend.ticket.builders.common.base import (
+    HostInfoSerializer,
+    HostRecycleSerializer,
+    SkipToRepresentationMixin,
+    fetch_cluster_ids,
+)
 from backend.ticket.builders.redis.base import BaseRedisTicketFlowBuilder, ClusterValidateMixin
 from backend.ticket.constants import SwitchConfirmType, TicketType
 
@@ -40,9 +44,7 @@ class ProxyScaleDownDetailSerializer(SkipToRepresentationMixin, ClusterValidateM
         )
 
     infos = serializers.ListField(help_text=_("批量操作参数列表"), child=InfoSerializer())
-    ip_dest = serializers.ChoiceField(
-        help_text=_("机器流向"), choices=IpDest.get_choices(), required=False, default=IpDest.Fault
-    )
+    ip_recycle = HostRecycleSerializer(help_text=_("主机回收信息"))
 
     def validate(self, attrs):
         clusters = Cluster.objects.filter(id__in=fetch_cluster_ids(attrs)).prefetch_related("proxyinstance_set")
