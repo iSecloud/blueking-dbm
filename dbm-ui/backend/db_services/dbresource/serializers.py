@@ -43,7 +43,7 @@ class ResourceImportSerializer(serializers.Serializer):
     resource_type = serializers.CharField(help_text=_("专属DB"), allow_blank=True, allow_null=True)
     bk_biz_id = serializers.IntegerField(help_text=_("机器当前所属的业务id	"), default=env.DBA_APP_BK_BIZ_ID)
     hosts = serializers.ListSerializer(help_text=_("主机"), child=HostInfoSerializer())
-    labels = serializers.CharField(help_text=_("标签列表id"), required=False)
+    labels = serializers.ListField(help_text=_("标签"), child=serializers.CharField())
 
 
 class ResourceApplySerializer(serializers.Serializer):
@@ -53,7 +53,7 @@ class ResourceApplySerializer(serializers.Serializer):
         spec = serializers.DictField(help_text=_("cpu&mem参数"), required=False)
         storage_spec = serializers.ListField(help_text=_("磁盘参数"), child=serializers.DictField(), required=False)
         location_spec = serializers.DictField(help_text=_("位置匹配参数"), required=False)
-        labels = serializers.DictField(help_text=_("标签"), required=False)
+        labels = serializers.ListField(help_text=_("标签"), required=False, child=serializers.CharField())
         affinity = serializers.CharField(help_text=_("亲和性"), required=False)
         count = serializers.IntegerField(help_text=_("数量"))
 
@@ -193,7 +193,7 @@ class ResourceDeleteSerializer(serializers.Serializer):
 
 class ResourceUpdateSerializer(serializers.Serializer):
     bk_host_ids = serializers.ListField(help_text=_("主机ID列表"), child=serializers.IntegerField())
-    labels = serializers.DictField(help_text=_("Labels"), required=False)
+    labels = serializers.ListField(help_text=_("标签"), required=False, child=serializers.CharField())
     for_biz = serializers.IntegerField(help_text=_("专用业务ID"), required=False)
     resource_type = serializers.CharField(help_text=_("专属DB"), allow_blank=True, allow_null=True)
     storage_device = serializers.JSONField(help_text=_("磁盘挂载点信息"), required=False)
