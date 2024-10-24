@@ -240,6 +240,11 @@ class ResourceApplyFlow(BaseTicketFlow):
         # 根据规格来填充相应机器的申请参数
         resource_spec = ticket_data["resource_spec"]
         for role, role_spec in resource_spec.items():
+            # 如果是指定主机，则直接请求，不走解析规格的逻辑
+            if role_spec.get("bk_host_ids"):
+                specify = {"group_mark": role, "bk_host_ids": role_spec["bk_host_ids"], "bk_cloud_id": bk_cloud_id}
+                details.append(specify)
+                continue
             # 如果申请数量为0/规格ID不合法(存在spec id为0 --> 是前端表单的默认值)，则跳过
             if not role_spec["count"] or not role_spec["spec_id"]:
                 continue
