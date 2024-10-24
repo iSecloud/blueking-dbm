@@ -234,7 +234,7 @@ class MySQLMigrateClusterRemoteFlow(object):
                     logger.error("cluster {} backup info not exists".format(cluster_model.id))
                     raise TendbGetBackupInfoFailedException(message=_("获取集群 {} 的备份信息失败".format(cluster_id)))
                 cluster["backupinfo"] = backup_info
-                cluster["new_master_ip"] = self.data["new_master_ip"]
+                cluster["new_master_ip"] = self.data["new_master_ ip"]
                 cluster["new_slave_ip"] = self.data["new_slave_ip"]
                 cluster["new_master_port"] = master_model.port
                 cluster["new_slave_port"] = master_model.port

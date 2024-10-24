@@ -81,6 +81,9 @@ class MysqlProxySwitchParamBuilder(builders.FlowParamBuilder):
 
 
 class MysqlProxySwitchResourceParamBuilder(BaseOperateResourceParamBuilder):
+    def format(self):
+        self.patch_info_affinity_location(roles=["target_proxy"])
+
     def post_callback(self):
         next_flow = self.ticket.next_flow()
         ticket_data = next_flow.details["ticket_data"]

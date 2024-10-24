@@ -15,12 +15,12 @@ from rest_framework import serializers
 from backend.db_services.dbbase.constants import IpSource
 from backend.flow.engine.controller.spider import SpiderController
 from backend.ticket import builders
-from backend.ticket.builders.common.base import (
-    BaseOperateResourceParamBuilder,
-    HostInfoSerializer,
-    HostRecycleSerializer,
-)
+from backend.ticket.builders.common.base import HostInfoSerializer, HostRecycleSerializer
 from backend.ticket.builders.common.constants import MySQLBackupSource
+from backend.ticket.builders.mysql.mysql_migrate_cluster import (
+    MysqlMigrateClusterParamBuilder,
+    MysqlMigrateClusterResourceParamBuilder,
+)
 from backend.ticket.builders.tendbcluster.base import BaseTendbTicketFlowBuilder, TendbBaseOperateDetailSerializer
 from backend.ticket.constants import FlowRetryType, TicketType
 
@@ -54,31 +54,15 @@ class TendbClusterMigrateClusterDetailSerializer(TendbBaseOperateDetailSerialize
         return attrs
 
 
-class TendbClusterMigrateClusterParamBuilder(builders.FlowParamBuilder):
+class TendbClusterMigrateClusterParamBuilder(MysqlMigrateClusterParamBuilder):
     controller = SpiderController.tendb_cluster_remote_migrate
 
     def format_ticket_data(self):
-        for info in self.ticket_data["infos"]:
-            info["old_master_ip"] = info["old_nodes"]["old_master"][0]["ip"]
-            info["old_slave_ip"] = info["old_nodes"]["old_slave"][0]["ip"]
-
-        if self.ticket_data["ip_source"] == IpSource.RESOURCE_POOL:
-            return
-
-        for info in self.ticket_data["infos"]:
-            info["new_master_ip"], info["new_slave_ip"] = info["new_master"]["ip"], info["new_slave"]["ip"]
-            info["bk_new_master"], info["bk_new_slave"] = info.pop("new_master"), info.pop("new_slave")
+        super().format_ticket_data()
 
 
-class TendbClusterMigrateClusterResourceParamBuilder(BaseOperateResourceParamBuilder):
-    def post_callback(self):
-        next_flow = self.ticket.next_flow()
-        ticket_data = next_flow.details["ticket_data"]
-        for info in ticket_data["infos"]:
-            info["bk_new_master"], info["bk_new_slave"] = info.pop("new_master")[0], info.pop("new_slave")[0]
-            info["new_master_ip"], info["new_slave_ip"] = info["bk_new_master"]["ip"], info["bk_new_slave"]["ip"]
-
-        next_flow.save(update_fields=["details"])
+class TendbClusterMigrateClusterResourceParamBuilder(MysqlMigrateClusterResourceParamBuilder):
+    pass
 
 
 @builders.BuilderFactory.register(TicketType.TENDBCLUSTER_MIGRATE_CLUSTER, is_apply=True, is_recycle=True)

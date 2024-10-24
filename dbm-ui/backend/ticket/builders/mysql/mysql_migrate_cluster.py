@@ -64,6 +64,10 @@ class MysqlMigrateClusterParamBuilder(builders.FlowParamBuilder):
     controller = MySQLController.mysql_migrate_remote_scene
 
     def format_ticket_data(self):
+        for info in self.ticket_data["infos"]:
+            info["old_master_ip"] = info["old_nodes"]["old_master"][0]["ip"]
+            info["old_slave_ip"] = info["old_nodes"]["old_slave"][0]["ip"]
+
         if self.ticket_data["ip_source"] == IpSource.RESOURCE_POOL:
             return
 
@@ -73,13 +77,16 @@ class MysqlMigrateClusterParamBuilder(builders.FlowParamBuilder):
 
 
 class MysqlMigrateClusterResourceParamBuilder(BaseOperateResourceParamBuilder):
+    def format(self):
+        self.patch_info_affinity_location(roles=["backend_group"])
+
     def post_callback(self):
         next_flow = self.ticket.next_flow()
         ticket_data = next_flow.details["ticket_data"]
         for info in ticket_data["infos"]:
-            info["bk_new_master"], info["bk_new_slave"] = info.pop("new_master")[0], info.pop("new_slave")[0]
+            backend = info.pop("backend_group")[0]
+            info["bk_new_master"], info["bk_new_slave"] = backend["master"], backend["slave"]
             info["new_master_ip"], info["new_slave_ip"] = info["bk_new_master"]["ip"], info["bk_new_slave"]["ip"]
-
         next_flow.save(update_fields=["details"])
 
 
