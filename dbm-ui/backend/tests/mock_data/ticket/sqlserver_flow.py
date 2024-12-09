@@ -357,12 +357,14 @@ SQLSERVER_RESTORE_SLAVE_TICKET_DATA = {
     "ticket_type": TicketType.SQLSERVER_RESTORE_SLAVE,
     "remark": "xxx",
     "details": {
-        "ip_source": "manual_input",
+        "ip_source": "resource_pool",
         "infos": [
             {
                 "cluster_ids": [CLUSTER_ID + 1],
-                "old_slave_host": {"ip": "1.1.1.4", "bk_cloud_id": 0, "bk_host_id": 3},
-                "new_slave_host": {"ip": "1.1.1.5", "bk_cloud_id": 0, "bk_host_id": 4},
+                "old_nodes": {"old_slave_host": [{"ip": "1.1.1.4", "bk_cloud_id": 0, "bk_host_id": 3}]},
+                "resource_spec": {
+                    "sqlserver_ha": {"spec_id": 0, "hosts": [{"ip": "1.1.1.5", "bk_cloud_id": 0, "bk_host_id": 4}]}
+                },
             }
         ],
     },
@@ -379,7 +381,7 @@ SQLSERVER_RESTORE_SLAVE_SOURCE_TICKET_DATA = {
             {
                 "resource_spec": {"sqlserver_ha": {"spec_id": 102, "count": 1}},
                 "cluster_ids": [CLUSTER_ID + 1],
-                "old_slave_host": {"ip": "1.1.1.4", "bk_cloud_id": 0, "bk_host_id": 3},
+                "old_nodes": {"old_slave_host": [{"ip": "1.1.1.4", "bk_cloud_id": 0, "bk_host_id": 3}]},
             }
         ],
     },

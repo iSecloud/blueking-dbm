@@ -84,7 +84,7 @@ MANGODB_REDUCE_MANGOS_DATA = {
             {
                 "cluster_id": CLUSTER_ID,
                 "role": "mongos",
-                "reduce_nodes": [{"ip": "127.0.0.1", "bk_cloud_id": 0, "bk_host_id": 3}],
+                "old_nodes": {"mongos": [{"ip": "127.0.0.1", "bk_cloud_id": 0, "bk_host_id": 3}]},
             }
         ],
     },
@@ -127,9 +127,9 @@ MANGODB_CUTOFF_TICKET_DATA = {
         "infos": [
             {
                 "cluster_id": CLUSTER_ID,
-                "mongos": [{"ip": "1.1.1.3", "spec_id": 3, "bk_cloud_id": 0}],
-                "mongodb": [{"ip": "1.1.1.4", "spec_id": 3, "bk_cloud_id": 0}],
-                "mongo_config": [{"ip": "1.1.1.5", "spec_id": 3, "bk_cloud_id": 0}],
+                "mongos": [{"ip": "1.1.1.3", "spec_id": 3, "bk_cloud_id": 0, "bk_host_id": 1}],
+                "mongodb": [{"ip": "1.1.1.4", "spec_id": 3, "bk_cloud_id": 0, "bk_host_id": 2}],
+                "mongo_config": [{"ip": "1.1.1.5", "spec_id": 3, "bk_cloud_id": 0, "bk_host_id": 3}],
             }
         ],
     },
@@ -286,7 +286,7 @@ MANGODB_PROXYINSTANCE_DATA = [
         "name": "",
         "time_zone": "+08:00",
         "bk_instance_id": 7087,
-        "machine_id": 130,
+        "machine_id": 4,
         "phase": "online",
     },
     {
@@ -344,7 +344,7 @@ MANGODB_MACHINE_DATA = [
         "access_layer": "proxy",
         "machine_type": "mongos",
         "cluster_type": ClusterType.MongoShardedCluster,
-        "bk_host_id": 130,
+        "bk_host_id": 4,
         "bk_os_name": "linux centos",
         "bk_idc_area": "",
         "bk_idc_area_id": 0,
