@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 
 from backend.tests.mock_data.components.cc import CCApiMock
 from backend.tests.mock_data.components.itsm import ItsmApiMock
+from backend.tests.mock_data.components.nodeman import NodemanApiMock
 from backend.tests.mock_data.iam_app.permission import PermissionMock
 from backend.tests.mock_data.ticket.ticket_flow import ROOT_ID, SN
 from backend.ticket.constants import FlowType, TicketFlowStatus, TicketStatus
@@ -27,6 +28,9 @@ class TestFlowBase:
         patch.object(TicketViewSet, "get_permissions"),
         patch("backend.ticket.flow_manager.itsm.ItsmApi", ItsmApiMock()),
         patch("backend.db_services.cmdb.biz.CCApi", CCApiMock()),
+        patch("backend.db_services.dbresource.handlers.CCApi", CCApiMock()),
+        patch("backend.db_services.ipchooser.query.resource.CCApi", CCApiMock()),
+        patch("backend.db_services.ipchooser.query.resource.BKNodeManApi", NodemanApiMock()),
         patch("backend.components.cmsi.handler.CmsiHandler.send_msg", lambda msg: "有一条待办事项需要您处理"),
         patch("backend.db_services.cmdb.biz.Permission", PermissionMock),
     ]
