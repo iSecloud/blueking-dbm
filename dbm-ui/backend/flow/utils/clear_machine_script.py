@@ -232,6 +232,13 @@ rm -rf /data*/vm*
 echo "Step 6 completed"
 """
 
+mongo_clear_machine_script = """
+rm -rf /data1/mongodata /data/mongodata /data/mongolog /data/dbbak/* /data/install
+rm -rf /usr/local/mongodb /usr/local/mongodb-linux*
+rm -rf /home/mysql/dbmon /home/mysql/filebeat-deploy /home/mysql/install /home/mysql/prometheus
+rm -rf /home/mysql/log /home/mysql/bk-dbmon /home/mysql/dbtools /home/mysql/dbareport
+"""
+
 db_type_script_map = {
     DBType.MySQL.value: mysql_clear_machine_script,
     DBType.TenDBCluster.value: mysql_clear_machine_script,
@@ -242,6 +249,7 @@ db_type_script_map = {
     DBType.Pulsar.value: pulsar_clear_machine_script,
     DBType.Doris.value: doris_clear_machine_script,
     DBType.Vm.value: vm_clear_machine_script,
+    DBType.MongoDB.value: mongo_clear_machine_script,
 }
 
 db_type_account_user_map = {
@@ -254,4 +262,5 @@ db_type_account_user_map = {
     DBType.Pulsar.value: DBA_ROOT_USER,
     DBType.Doris.value: DBA_ROOT_USER,
     DBType.Vm.value: DBA_ROOT_USER,
+    DBType.MongoDB.value: DBA_ROOT_USER,
 }
