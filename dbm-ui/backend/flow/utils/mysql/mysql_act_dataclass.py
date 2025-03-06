@@ -503,6 +503,7 @@ class ImportMachinePollKwargs:
     ips: list
     ip_dest: str
     ticket_id: int
+    remark: str
 
 
 @dataclass()
