@@ -193,3 +193,7 @@ DEBUG_TOOL_BAR = get_type_env(key="DEBUG_TOOL_BAR", _type=bool, default=False)
 WINDOW_SSH_PORT = get_type_env(key="WINDOW_SSH_PORT", _type=int, default=22)
 # 本地测试人员优先使用的版本
 REPO_VERSION_FOR_DEV = get_type_env(key="REPO_VERSION_FOR_DEV", _type=str, default="")
+
+# 是否开启多租户
+ENABLE_MULTI_TENANT_MODE = get_type_env(key="ENABLE_MULTI_TENANT_MODE", _type=bool, default=False)
+IS_GLOBAL_TENANT = get_type_env(key="IS_GLOBAL_TENANT", _type=bool, default=False)
