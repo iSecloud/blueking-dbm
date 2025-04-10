@@ -72,7 +72,7 @@ class LoginSuccessView(APIView):
     @xframe_options_exempt
     @method_decorator(login_required(redirect_field_name="c_url"))
     def get(self, request):
-        context = {"SESSION_COOKIE_DOMAIN": settings.SESSION_COOKIE_DOMAIN.lstrip(".")}
+        context = {"SESSION_COOKIExxx_DOMAIN": settings.SESSION_COOKIE_DOMAIN.lstrip(".")}
         return Response(context)
 
 
