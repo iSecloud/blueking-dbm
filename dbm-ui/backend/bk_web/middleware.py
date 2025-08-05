@@ -16,6 +16,7 @@ import wrapt
 from apigw_manager.apigw.authentication import UserModelBackend
 from blueapps.account.middlewares import LoginRequiredMiddleware
 from blueapps.account.models import User
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.http import JsonResponse
@@ -88,6 +89,18 @@ class DBMLoginRequiredMiddleware(LoginRequiredMiddleware):
         2. 如果用的dbm的APP CODE和APP TOKEN，则认为是服务内调用，授予超级用户
         3. 如果是apigw认证通过，则授予请求头中X-Bkapi-Apigw的用户
         """
+
+        try:
+            header, secure_value = settings.SECURE_PROXY_SSL_HEADER
+            header_value = request.META.get(header)
+            logger.error("+++++++++++{}: {}++++++++++".format(header, header_value))
+        except ValueError:
+            raise Exception(
+                'The SECURE_PROXY_SSL_HEADER setting must be a tuple containing two values.'
+            )
+
+        logger.error("+++++++++++request meta: {}++++++++++".format(request.META))
+
 
         def authorize_admin_user():
             tenant_id = request.headers.get("X-Bk-Tenant-Id", "")
