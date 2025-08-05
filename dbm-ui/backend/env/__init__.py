@@ -23,6 +23,7 @@ SECRET_KEY = get_type_env(key="APP_TOKEN", default="xxxx", _type=str)
 DEFAULT_USERNAME = get_type_env(key="DEFAULT_USERNAME", default="admin", _type=str)
 # 环境允许跨域的域名
 CORS_ALLOWED_ORIGINS = get_type_env(key="CORS_ALLOWED_ORIGINS", default=[], _type=list)
+CSRF_TRUSTED_ORIGINS = get_type_env(key="CSRF_TRUSTED_ORIGINS", default=[], _type=list)
 
 RUN_VER = get_type_env(key="RUN_VER", default="open", _type=str)
 RIO_TOKEN = get_type_env(key="RIO_TOKEN", default="", _type=str)
