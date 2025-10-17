@@ -12,7 +12,7 @@ import itertools
 import logging
 from typing import List
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from rest_framework.permissions import BasePermission
 
 from backend.configuration.models import DBAdministrator

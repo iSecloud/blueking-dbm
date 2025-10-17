@@ -13,7 +13,7 @@ from typing import Dict, List
 
 import humanize
 from django.forms import model_to_dict
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from backend.db_meta.models import BKCity, LogicalCity
 from backend.db_meta.models.city_map import BKSubzone

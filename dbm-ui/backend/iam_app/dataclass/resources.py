@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Union
 
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from iam import Resource
 
 from backend.components import DBPrivManagerApi
@@ -229,7 +229,7 @@ class TaskFlowResourceMeta(ResourceMeta):
     display_fields: list = ResourceMeta.Field(["root_id"])
     attribute: str = "created_by"
     attribute_display: str = _("创建者")
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def create_instance(cls, instance_id: str, attr=None) -> Resource:
@@ -275,7 +275,7 @@ class TicketResourceMeta(ResourceMeta):
     display_fields: list = ResourceMeta.Field(["id"])
     attribute: str = "creator"
     attribute_display: str = _("创建者")
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def create_instance(cls, instance_id: str, attr=None) -> Resource:
@@ -321,7 +321,7 @@ class ClusterResourceMeta(ResourceMeta):
     display_fields: list = ResourceMeta.Field(["immute_domain"])
     attribute: str = "creator"
     attribute_display: str = _("创建者")
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def create_instance(cls, instance_id: str, attr=None) -> Resource:
@@ -479,7 +479,7 @@ class AccountResourceMeta(ResourceMeta):
     display_fields: list = ResourceMeta.Field(["user"])
     attribute: str = "creator"
     attribute_display: str = _("创建者")
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def create_instance(cls, instance_id: str, account: dict = None, attr=None) -> Resource:
@@ -563,7 +563,7 @@ class MonitorPolicyResourceMeta(ResourceMeta):
     attribute_display: str = _("创建者")
     lookup_field: str = "id"
     display_fields: list = ResourceMeta.Field(["name"])
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def get_bk_iam_path(cls, instance):
@@ -634,7 +634,7 @@ class NotifyGroupResourceMeta(ResourceMeta):
     attribute_display: str = _("创建者")
     lookup_field: str = "id"
     display_fields: list = ResourceMeta.Field(["name"])
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def get_bk_iam_path(cls, instance):
@@ -688,7 +688,7 @@ class OpenareaConfigResourceMeta(ResourceMeta):
     attribute_display: str = _("创建者")
     lookup_field: str = "id"
     display_fields: list = ResourceMeta.Field(["cluster_type", "config_name"])
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def create_instance(cls, instance_id: str, attr=None) -> Resource:
@@ -711,7 +711,7 @@ class DumperSubscribeConfigResourceMeta(ResourceMeta):
     attribute_display: str = _("创建者")
     lookup_field: str = "id"
     display_fields: list = ResourceMeta.Field(["name"])
-    parent: ResourceMeta = BusinessResourceMeta()
+    parent: ResourceMeta = field(default_factory=BusinessResourceMeta)
 
     @classmethod
     def create_instance(cls, instance_id: str, attr=None) -> Resource:
