@@ -87,16 +87,16 @@ jobs:
         cat ${filename}
         git config --global user.email 826035498@qq.com
         git config --global user.name zhangzhw8
-        git remote add upstream https://$WORKFLOW_ACTION_TOKEN@github.com/TencentBlueKing/blueking-dbm
+        # 测试后改回 TencentBlueKing
+        git remote add upstream https://$WORKFLOW_ACTION_TOKEN@github.com/iSecloud/blueking-dbm
         git remote -v
         git status
         git add ${filename}
         git commit -m "chore: release version ${{ steps.yaml-data.outputs.data }} #1"
-        git status
         # 创建新分支用于提交 PR
-        release_branch="release/add-release-file-${{ steps.yaml-data.outputs.data }}"
+        release_branch="release/add-release-file"
         git checkout -b ${release_branch}
-        git push --set-upstream origin ${release_branch}
+        git push --set-upstream upstream ${release_branch}
         echo "release_branch=${release_branch}" >> $GITHUB_OUTPUT
 
     - id: create-release-file-pr
