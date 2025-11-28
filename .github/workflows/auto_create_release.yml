@@ -96,7 +96,7 @@ jobs:
         # 创建新分支用于提交 PR
         release_branch="release/add-release-file-${{ steps.yaml-data.outputs.data }}"
         git checkout -b ${release_branch}
-        git push --set-upstream upstream ${release_branch}
+        git push --set-upstream origin ${release_branch}
         echo "release_branch=${release_branch}" >> $GITHUB_OUTPUT
 
     - id: create-release-file-pr
