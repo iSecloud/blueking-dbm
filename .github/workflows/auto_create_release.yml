@@ -90,19 +90,14 @@ jobs:
         git remote set-url origin https://$WORKFLOW_ACTION_TOKEN@github.com/iSecloud/blueking-dbm.git
         git remote -v
         git status
+        # 只添加文件到暂存区，不提交，让 peter-evans/create-pull-request 自己提交
         git add ${filename}
-        git commit -m "chore: release version ${{ steps.yaml-data.outputs.data }} #1"
-        # 创建新分支用于提交 PR
         release_branch="release/add-release-file-${{ steps.yaml-data.outputs.data }}"
-        git checkout -b ${release_branch}
-        git push --set-upstream origin ${release_branch}
         echo "release_branch=${release_branch}" >> $GITHUB_OUTPUT
 
     - id: create-release-file-pr
       name: Create Pull Request for Release File
       uses: peter-evans/create-pull-request@v6
-      env:
-        GITHUB_TOKEN: ${{ secrets.WORKFLOW_ACTION_TOKEN }}
       with:
         token: ${{ secrets.WORKFLOW_ACTION_TOKEN }}
         title: 'chore: release version ${{ steps.yaml-data.outputs.data }} #1'
@@ -110,3 +105,6 @@ jobs:
         branch: ${{ steps.add-release-file.outputs.release_branch }}
         base: ${{ steps.get-current-branch.outputs.current_branch }}
         delete-branch: true
+        commit-message: 'chore: release version ${{ steps.yaml-data.outputs.data }} #1'
+        committer: 'zhangzhw8 <826035498@qq.com>'
+        author: 'zhangzhw8 <826035498@qq.com>'
