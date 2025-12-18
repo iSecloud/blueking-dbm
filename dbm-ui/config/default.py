@@ -237,10 +237,21 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "REDIS_CLIENT_CLASS": "redis.client.StrictRedis",
-            "REDIS_CLIENT_KWARGS": {"decode_responses": True},
+            "REDIS_CLIENT_KWARGS": {
+                "decode_responses": True,
+                "health_check_interval": 30,  # 健康检查间隔
+                "socket_keepalive": True,  # 启用socket keepalive
+                "socket_timeout": 5,  # socket超时
+                "socket_connect_timeout": 5,  # 连接超时
+                "retry_on_timeout": True,  # 超时重试
+            },
             "SERIALIZER": "backend.utils.redis.JSONSerializer",
             "MAX_ENTRIES": 100000,
-            "CULL_FREQUENCY": 10
+            "CULL_FREQUENCY": 10,
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 50,  # 连接池最大连接数
+                "retry_on_timeout": True,
+            }
         },
     },
     "login_db": {"BACKEND": "django.core.cache.backends.db.DatabaseCache", "LOCATION": "account_cache"},
@@ -406,6 +417,26 @@ CELERY_IMPORTS = (
 app.conf.enable_utc = False
 app.conf.timezone = "Asia/Shanghai"
 app.conf.broker_url = env.BROKER_URL
+
+# Celery Broker 连接配置 - 解决 Redis 连接关闭问题
+app.conf.broker_connection_retry = True  # 连接失败时自动重试
+app.conf.broker_connection_retry_on_startup = True  # 启动时连接失败自动重试
+app.conf.broker_connection_max_retries = 10  # 最大重试次数，0表示无限重试
+app.conf.broker_pool_limit = 10  # broker连接池大小
+app.conf.broker_heartbeat = 30  # 心跳间隔(秒)，0表示禁用
+app.conf.broker_heartbeat_checkrate = 2  # 心跳检查频率(每N次迭代检查一次)
+
+# Redis Backend 配置
+app.conf.redis_socket_keepalive = True  # 启用socket keepalive
+app.conf.redis_socket_keepalive_options = {
+    1: 60,  # TCP_KEEPIDLE: 60秒
+    2: 10,  # TCP_KEEPINTVL: 10秒
+    3: 3,   # TCP_KEEPCNT: 3次
+}
+app.conf.redis_socket_timeout = 5  # socket超时时间(秒)
+app.conf.redis_socket_connect_timeout = 5  # 连接超时时间(秒)
+app.conf.redis_retry_on_timeout = True  # 超时时重试
+app.conf.redis_max_connections = 50  # Redis连接池最大连接数
 
 # 版本日志
 VERSION_LOG = {"MD_FILES_DIR": os.path.join(PROJECT_ROOT, "release")}

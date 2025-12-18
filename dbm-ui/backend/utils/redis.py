@@ -32,12 +32,31 @@ class JSONSerializer(BaseSerializer):
 
 class ConnectionFactory(Factory):
     """
-    自定义ConnectionFactory以注入decode_responses参数
+    自定义ConnectionFactory以注入decode_responses参数和连接健康检查
     """
 
     def make_connection_params(self, url):
         kwargs = super().make_connection_params(url)
         kwargs["decode_responses"] = True
+        # 添加连接健康检查配置，防止使用已关闭的连接
+        kwargs["health_check_interval"] = 30  # 每30秒检查一次连接健康状态
+        # 设置socket keepalive选项，维持长连接
+        kwargs["socket_keepalive"] = True
+        kwargs["socket_keepalive_options"] = {
+            # TCP_KEEPIDLE: 连接闲置多久后开始发送keepalive探测包(秒)
+            1: 60,  # 60秒
+            # TCP_KEEPINTVL: keepalive探测包的发送间隔(秒)
+            2: 10,  # 10秒
+            # TCP_KEEPCNT: 最大keepalive探测次数
+            3: 3,   # 3次
+        }
+        # 设置socket超时，避免无限等待
+        if "socket_timeout" not in kwargs or kwargs["socket_timeout"] is None:
+            kwargs["socket_timeout"] = 5  # 默认5秒超时
+        if "socket_connect_timeout" not in kwargs or kwargs["socket_connect_timeout"] is None:
+            kwargs["socket_connect_timeout"] = 5  # 连接超时5秒
+        # 启用连接池的连接检查
+        kwargs["retry_on_timeout"] = True  # 超时时自动重试
         return kwargs
 
 
