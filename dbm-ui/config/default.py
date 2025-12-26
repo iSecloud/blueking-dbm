@@ -638,29 +638,44 @@ if env.DEBUG_TOOL_BAR:
 
 
 # ================================ DBM AIDEV 配置 =========================================
+
+# 智能体配置
+AIDEV_BKPLUGIN_DEFAULT_NAME = "default"
+DEFAULT_AGENT = "aidev_agent.core.extend.agent.qa.CommonQAAgent"
+DEFAULT_CONFIG_MANAGER = "backend.dbm_aiagent.agent.configs.manager.DBMAgentConfigManager"
+AGENT_APP_CODE = env.BK_AIDEV_AGENT_APP_CODE or APP_CODE
+AGENT_APP_SECRET = env.BK_AIDEV_AGENT_APP_SECRET or APP_TOKEN
+BK_AIDEV_APIGW_ENDPOINT = env.BK_AIDEV_APIGW_ENDPOINT
+# 智能体客服渠道
+CHAT_GROUP_ENABLED = os.environ.get("CHAT_GROUP_ENABLED") == "1"
+CHAT_GROUP_STAFF = os.environ.get("CHAT_GROUP_STAFF")
+CHAT_GROUP_STAFF = [i.strip() for i in CHAT_GROUP_STAFF.split(",")] if CHAT_GROUP_STAFF else []
+CHAT_GROUP_TYPE = os.environ.get("CHAT_GROUP_TYPE", "qyweixin_chat_group")
+
+
 # 开启MCP server
 BK_APIGW_STAGE_ENABLE_MCP_SERVERS = env.BK_APIGW_STAGE_ENABLE_MCP_SERVERS
 BK_APIGW_STAGE_MCP_SERVERS = [
-    # {
-    #     "name": "dbm-mcp",
-    #     "description": "dbm-mcp",
-    #     # 主动授权 app_code
-    #     "target_app_codes": [APP_CODE],
-    #     "labels": ["dbm"],
-    #     # 是否启用：1-启用，0-停止
-    #     "status": 1,
-    #     # 是否公开
-    #     "is_public": False,
-    #     # 自动发现并填充该 MCP 服务器对应的工具
-    #     "tools": [],
-    # },
+    {
+        "name": "bill-query",
+        "description": """dbm bill query""",
+        # 主动授权 app_code
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
+        "labels": ["bill-query"],
+        # 是否启用：1-启用，0-停止
+        "status": 1,
+        # 是否公开
+        "is_public": False,
+        # 自动发现并填充该 MCP 服务器对应的工具
+        "tools": [],
+    },
     {
         "name": "mysql-query",
         "description": """mysql relate information query, such as 
         1. mysql instance status, include run-time variables, status, explain sql and so on
         2. tendbsingle/tendbha/tendbcluster cluster info""",
         # 主动授权 app_code
-        "target_app_codes": [APP_CODE],
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
         "labels": ["mysql-query"],
         # 是否启用：1-启用，0-停止
         "status": 1,
@@ -673,7 +688,7 @@ BK_APIGW_STAGE_MCP_SERVERS = [
         "name": "mysql-bill",
         "description": """create mysql bill""",
         # 主动授权 app_code
-        "target_app_codes": [APP_CODE],
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
         "labels": ["mysql-bill"],
         # 是否启用：1-启用，0-停止
         "status": 1,
@@ -686,7 +701,7 @@ BK_APIGW_STAGE_MCP_SERVERS = [
         "name": "dbmeta-query",
         "description": """query dbm meta info""",
         # 主动授权 app_code
-        "target_app_codes": [APP_CODE],
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
         "labels": ["dbmeta-query"],
         # 是否启用：1-启用，0-停止
         "status": 1,
@@ -702,7 +717,7 @@ BK_APIGW_STAGE_MCP_SERVERS = [
         2. need cluster_domain and instance_role provided
         """,
         # 主动授权 app_code
-        "target_app_codes": [APP_CODE],
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
         "labels": ["sqlserver-query"],
         # 是否启用：1-启用，0-停止
         "status": 1,
@@ -718,7 +733,7 @@ BK_APIGW_STAGE_MCP_SERVERS = [
     2. sqlserver-ha/sqlserver cluster info
     """,
         # 主动授权 app_code
-        "target_app_codes": [APP_CODE],
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
         "labels": ["mysql-slowlog"],
         # 是否启用：1-启用，0-停止
         "status": 1,
@@ -728,29 +743,42 @@ BK_APIGW_STAGE_MCP_SERVERS = [
         "tools": [],
     },
     {
-        "name": "bill-query",
-        "description": """dbm bill query""",
+        "name": "redis-query-meta",
+        "description": """redis meta query. """,
         # 主动授权 app_code
-        "target_app_codes": [APP_CODE],
-        "labels": ["bill-query"],
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
+        "labels": ["redis-query-meta"],
         # 是否启用：1-启用，0-停止
         "status": 1,
         # 是否公开
         "is_public": False,
         # 自动发现并填充该 MCP 服务器对应的工具
         "tools": [],
-    }
+    },
+    {
+        "name": "redis-query-status",
+        "description": """ redis instance running info.""",
+        # 主动授权 app_code
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
+        "labels": ["redis-query-status"],
+        # 是否启用：1-启用，0-停止
+        "status": 1,
+        # 是否公开
+        "is_public": False,
+        # 自动发现并填充该 MCP 服务器对应的工具
+        "tools": [],
+    },
+    {
+        "name": "redis-bill",
+        "description": """create redis bill""",
+        # 主动授权 app_code
+        "target_app_codes": [APP_CODE, AGENT_APP_CODE],
+        "labels": ["redis-bill"],
+        # 是否启用：1-启用，0-停止
+        "status": 1,
+        # 是否公开
+        "is_public": False,
+        # 自动发现并填充该 MCP 服务器对应的工具
+        "tools": [],
+    },
 ]
-
-# 智能体配置
-AIDEV_BKPLUGIN_DEFAULT_NAME = "default"
-DEFAULT_AGENT = "aidev_agent.core.extend.agent.qa.CommonQAAgent"
-DEFAULT_CONFIG_MANAGER = "backend.dbm_aiagent.agent.configs.manager.DBMAgentConfigManager"
-AGENT_APP_CODE = env.BK_AIDEV_AGENT_APP_CODE or APP_CODE
-AGENT_APP_SECRET = env.BK_AIDEV_AGENT_APP_SECRET or APP_TOKEN
-BK_AIDEV_APIGW_ENDPOINT = env.BK_AIDEV_APIGW_ENDPOINT
-# 智能体客服渠道
-CHAT_GROUP_ENABLED = os.environ.get("CHAT_GROUP_ENABLED") == "1"
-CHAT_GROUP_STAFF = os.environ.get("CHAT_GROUP_STAFF")
-CHAT_GROUP_STAFF = [i.strip() for i in CHAT_GROUP_STAFF.split(",")] if CHAT_GROUP_STAFF else []
-CHAT_GROUP_TYPE = os.environ.get("CHAT_GROUP_TYPE", "qyweixin_chat_group")

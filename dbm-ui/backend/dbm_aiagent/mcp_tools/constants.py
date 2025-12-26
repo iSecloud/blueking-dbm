@@ -21,6 +21,9 @@ class DBMAMcpTools(StrStructuredEnum):
     MYSQL_SLOWLOG = EnumField("mysql-slowlog", "mysql-slowlog")
     SQLSERVER_QUERY = EnumField("sqlserver-query", "sqlserver-query")
     BILL_QUERY = EnumField("bill-query", "bill-query")
+    REDIS_QUERY_META = EnumField("redis-query-meta", "redis-query-meta")
+    REDIS_QUERY_STATUS = EnumField("redis-query-status", "redis-query-status")
+    REDIS_BILL = EnumField("redis-bill", "redis-bill")
 
 
 class DBMMCPTags(StrStructuredEnum):
