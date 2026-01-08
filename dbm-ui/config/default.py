@@ -83,6 +83,8 @@ INSTALLED_APPS += (
     "django_filters",
     "corsheaders",
     "debug_toolbar",
+    # bkoauth
+    "bkoauth",
     # version log
     "backend.version_log",
     # bk_notice
@@ -408,6 +410,8 @@ CSRF_COOKIE_DOMAIN = SESSION_COOKIE_DOMAIN
 REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 APIGW_PUBLIC_KEY = env.APIGW_PUBLIC_KEY
+
+OAUTH_API_URL = env.OAUTH_API_URL
 
 # DRF 配置
 REST_FRAMEWORK = {
