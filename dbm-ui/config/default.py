@@ -83,8 +83,6 @@ INSTALLED_APPS += (
     "django_filters",
     "corsheaders",
     "debug_toolbar",
-    # bkoauth
-    "bkoauth",
     # version log
     "backend.version_log",
     # bk_notice
