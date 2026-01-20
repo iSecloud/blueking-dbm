@@ -42,8 +42,8 @@ type Config struct {
 	CloudCertificate *CloudCertificate `yaml:"cloudCertificate"`
 	Yunti            yunti.YuntiConfig `yaml:"yunti"`
 	LLM              LLMConfig         `yaml:"llm" mapstructure:"llm"`
-	// 中转业务ID
-	TransBizId int `yaml:"transBizId"`
+	TransBizId       int               `yaml:"transBizId"`
+	Tenant           Tenant            `yaml:"tenant"`
 }
 
 // LLMConfig LLM 大模型配置
@@ -77,6 +77,12 @@ type OpenAIConfig struct {
 type AgentConfig struct {
 	MaxIterations  int `yaml:"max_iterations" mapstructure:"max_iterations"`
 	TimeoutSeconds int `yaml:"timeout_seconds" mapstructure:"timeout_seconds"`
+}
+
+// Tenant config
+type Tenant struct {
+	Id     string `yaml:"id"`
+	Enable bool   `yaml:"enable"`
 }
 
 // Db config
