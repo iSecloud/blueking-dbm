@@ -3,4 +3,14 @@
 .idea
 .vscode
 tmp*
+.git
+*.log
+node_modules
+__pycache__
+*.pyc
+.pytest_cache
+dbm-services/
+docs/
+helm-charts/
+*.md
 
