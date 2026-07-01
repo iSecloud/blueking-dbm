@@ -45,6 +45,8 @@ class MysqlForceSqlImportFlowBuilder(BaseMySQLTicketFlowBuilder):
     backup_builder = MysqlSqlImportBackUpFlowParamBuilder
     inner_flow_builder = MysqlForceSqlImportFlowParamBuilder
     editable = False
+    # TODO: 临时开启自动互斥重试用来测试
+    retry_type = FlowRetryType.AUTO_RETRY.value
 
     def patch_ticket_detail(self):
         upload_sql_path = BKREPO_SQLFILE_PATH.format(biz=self.ticket.bk_biz_id)

@@ -20,7 +20,7 @@ from backend.ticket.builders.mysql.mysql_force_import_sqlfile import (
 )
 from backend.ticket.builders.tendbcluster.base import BaseTendbTicketFlowBuilder
 from backend.ticket.builders.tendbcluster.tendb_import_sqlfile import TenDBClusterSqlImportBackUpFlowParamBuilder
-from backend.ticket.constants import TicketType
+from backend.ticket.constants import FlowRetryType, TicketType
 
 logger = logging.getLogger("root")
 
@@ -43,3 +43,5 @@ class TenDBClusterForceSqlImportFlowBuilder(BaseTendbTicketFlowBuilder, MysqlFor
     backup_builder = TenDBClusterSqlImportBackUpFlowParamBuilder
     inner_flow_builder = TenDBClusterSqlImportFlowParamBuilder
     editable = False
+    # TODO: 临时开启自动互斥重试用来测试
+    retry_type = FlowRetryType.AUTO_RETRY.value
