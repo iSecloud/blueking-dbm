@@ -20,7 +20,7 @@ from backend.ticket.builders.mysql.mysql_delete_clear_db import (
     MysqlDeleteClearDBFlowParamBuilder,
 )
 from backend.ticket.builders.tendbcluster.base import BaseTendbTicketFlowBuilder
-from backend.ticket.constants import TicketType
+from backend.ticket.constants import FlowRetryType, TicketType
 
 logger = logging.getLogger("root")
 
@@ -39,3 +39,4 @@ class TendbClusterDeleteClearDBFlowBuilder(BaseTendbTicketFlowBuilder, MysqlDele
     inner_flow_builder = TendbClusterDeleteClearDBFlowParamBuilder
     inner_flow_name = _("删除清档备份库执行")
     editable = True
+    retry_type = FlowRetryType.AUTO_RETRY
