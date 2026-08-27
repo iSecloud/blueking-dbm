@@ -1,0 +1,10 @@
+apiVersion: bkai.tencent.com/v1
+kind: Skill
+
+metadata:
+  code: dbm-redis-proxy-diagnose
+  name: Redis Proxy异常排查
+
+spec:
+  generate_type: space
+  is_public: false
