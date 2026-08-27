@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# dbm-aidev-init: render mcps → bkai-init validate → sync
+#
+# Job 必填: BK_APIGW_STAGE_NAME, BKAI_SPACE（目标空间 ID）
+# Job 可选:
+#   BK_APIGW_MCP_NAME   (默认 bkdbm-mcp)
+#   BKAI_TENANT_ID      (默认 system)
+#   BKAI_PUBLISH        (默认 1，传 0 则只同步草稿)
+#   BKAI_PUBLISH_CONFIG_ONLY (默认 1)
+#   SKILL_BASE_IMAGE    (可选，替换 Skill Dockerfile 中的基础镜像)
+set -euo pipefail
+
+PKG=/app/bkai-resources
+GATEWAY="${BK_APIGW_MCP_NAME:-bkdbm-mcp}"
+STAGE="${BK_APIGW_STAGE_NAME:?BK_APIGW_STAGE_NAME is required}"
+SPACE="${BKAI_SPACE:?BKAI_SPACE (space id) is required}"
+TENANT_ID="${BKAI_TENANT_ID:-system}"
+PUBLISH="${BKAI_PUBLISH:-1}"
+PUBLISH_CONFIG_ONLY="${BKAI_PUBLISH_CONFIG_ONLY:-1}"
+
+echo "[dbm-aidev-init] gateway=${GATEWAY} stage=${STAGE} tenant=${TENANT_ID} space=${SPACE} publish=${PUBLISH}"
+
+python3 "${PKG}/docker/render_agent_configs.py" \
+  --package "${PKG}" \
+  --bindings "${PKG}/docker/mcp_bindings.json" \
+  --gateway "${GATEWAY}" \
+  --stage "${STAGE}"
+
+SYNC_ARGS=(
+  -f "${PKG}/bkai.yaml"
+  --tenant-id "${TENANT_ID}"
+  --space "${SPACE}"
+  --confirm
+)
+
+if [[ "${PUBLISH}" == "1" ]]; then
+  SYNC_ARGS+=(--publish "--publish_config_only=${PUBLISH_CONFIG_ONLY}")
+fi
+
+if [[ -n "${SKILL_BASE_IMAGE:-}" ]]; then
+  SYNC_ARGS+=(--var "SKILL_BASE_IMAGE=${SKILL_BASE_IMAGE}")
+fi
+
+bkai-init validate -f "${PKG}/bkai.yaml" --space "${SPACE}"
+bkai-init sync "${SYNC_ARGS[@]}"
+
+echo "[dbm-aidev-init] done"
