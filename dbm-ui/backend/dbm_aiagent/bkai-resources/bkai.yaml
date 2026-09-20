@@ -8,7 +8,7 @@ kind: AgentPackage
 
 metadata:
   name: bk-dbm
-  version: "1.0.0"
+  version: "1.0.1"
 
 # 声明本次需要同步的资源路径（相对本文件所在目录）
 # Collection / Skill / 知识库 / 子智能体需先于主智能体
