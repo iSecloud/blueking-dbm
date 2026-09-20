@@ -1,6 +1,6 @@
 ---
 name: dbm-mysql-alarm-analyzer
-description: MySQL 告警智能分析。当用户转发告警信息、要求分析告警、排查 Threads_running 高、慢查询过多、连接失败、CPU 负载高、DBHA 故障切换、长空闲事务、MySQL hang、从库延迟、磁盘空间使用率高、DBHA 探测失败等 MySQL 告警时触发。用户消息中包含告警标题特征（如  [致命]、 [预警]、 首次异常时即视为转发告警。
+description: MySQL 告警智能分析。当用户转发告警信息、要求分析告警、排查 Threads_running 高、慢查询过多、连接失败、CPU 负载高、DBHA 故障切换、长空闲事务、MySQL hang、从库延迟、磁盘空间使用率高、DBHA 探测失败等 MySQL 告警时触发。用户消息中包含告警标题特征（如 [致命]、 [预警]、 首次异常时即视为转发告警。
 metadata: {"version":"1.0.3","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-mysql-alarm-analyzer","is_public":false,"bkai-dependencies":{"envs":[{"key":"DBM_MCPS","description":"dbm mcp server 地址列表","required":true,"default":"bkdbm-mcp-prod-alarm-query bkdbm-mcp-prod-mysql-capacity bkdbm-mcp-prod-mysql-metrics bkdbm-mcp-prod-mysql-query bkdbm-mcp-prod-mysql-slowlog bkdbm-mcp-prod-ticket-op bkdbm-mcp-prod-bkjob-wrap","secret":false},{"key":"OUTPUT_DIR","description":"skills 产物输出路径","required":false,"default":".storage/session","secret":false}]}}
 ---
 
@@ -71,7 +71,7 @@ metadata: {"version":"1.0.3","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-
 
 ---
 
-**## 🔔 告警分析报告**
+**## 告警分析报告**
 
 **告警类型**: `<alarm_type>`
 **告警级别**: `<severity>`
@@ -85,7 +85,7 @@ metadata: {"version":"1.0.3","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-
 
 ---
 
-**## 📋 综合诊断与建议**
+**## 综合诊断与建议**
 
 根据以上所有分析结果，给出综合判断：
 1. 当前症状是否仍在持续

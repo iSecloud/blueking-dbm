@@ -79,7 +79,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.mysql_metrics_query_by_metric_name
 
 ## 报告输出格式
 
-### 🔌 连接状态检测
+### 连接状态检测
 
 | 检查项 | 结果 |
 |--------|------|
@@ -89,7 +89,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.mysql_metrics_query_by_metric_name
 
 （如果 processlist 获取成功，展示 mysql-processlist-analyzer 的标准分析结果）
 
-### 🔔 关联告警（base_time 前 10 分钟）
+### 关联告警（base_time 前 10 分钟）
 
 | 告警名称 | 时间 | 目标 | 内容 |
 |---------|------|------|------|
@@ -97,7 +97,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.mysql_metrics_query_by_metric_name
 
 如无关联告警，显示：「base_time 前 10 分钟无其他关联告警」
 
-### 🏗️ 集群拓扑状态
+### ️ 集群拓扑状态
 
 展示集群当前拓扑结构和各实例状态。
 

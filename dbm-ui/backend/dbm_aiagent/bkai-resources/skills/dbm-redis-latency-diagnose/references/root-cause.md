@@ -43,7 +43,7 @@
 - `internal_key_skipped_count`：range scan 跨 SST 文件的内部 key 跳过次数，高说明数据版本多/delete tombstone 多
 - `delete_skipped_count`：range scan 时跳过 delete tombstone 的次数
 
-> 📌 提醒用户：可在 DBM 平台监控页或蓝鲸监控中搜索上述指标名，选对应实例（如 `192.0.2.11:30011`）查看趋势。后续若 MCP 接口支持，可直接通过 metrics 工具拉取。
+> 提醒用户：可在 DBM 平台监控页或蓝鲸监控中搜索上述指标名，选对应实例（如 `192.0.2.11:30011`）查看趋势。后续若 MCP 接口支持，可直接通过 metrics 工具拉取。
 
 **建议：**
 - 对问题 shard 触发手动 compaction
@@ -62,7 +62,7 @@
 **验证指标（当前 MCP 接口不支持，提醒用户手动查）：**
 - `user_key_comparison_count`：compaction 过程中 key 比较次数，高说明 compaction 激烈
 
-> 📌 提醒用户：可在 DBM 平台监控页或蓝鲸监控中搜索 `user_key_comparison_count`，选对应实例查看趋势。后续若 MCP 接口支持，可直接通过 metrics 工具拉取。
+> 提醒用户：可在 DBM 平台监控页或蓝鲸监控中搜索 `user_key_comparison_count`，选对应实例查看趋势。后续若 MCP 接口支持，可直接通过 metrics 工具拉取。
 
 **建议：**
 - Compaction 属于 TendisSSD 正常行为，通常会自行结束
@@ -313,11 +313,11 @@ Proxy QPS latest << avg（差距 > 5x）
 ```
 
 **建议处置**：
-1. 🚨 **紧急**：联系 `biz-11/datamining` 业务方
+1. **紧急**：联系 `biz-11/datamining` 业务方
    - 用 `HLEN 1:scores:1:0:ai_drop_01:1:900000011:ai_drop:*` 确认 field 数量
    - **立即停止或限速 `HGETALL`**，改为 `HSCAN` 分批读取
    - 排查 `HINCRBY` 是否有并发批量写入异常
-2. 📌 **中期**：拆分超大 Hash（按 ID 分桶，控制单 Key field 数 < 1000）；对 `HGETALL` 加访问频率限制或本地缓存
+2. **中期**：拆分超大 Hash（按 ID 分桶，控制单 Key field 数 < 1000）；对 `HGETALL` 加访问频率限制或本地缓存
 
 ---
 
@@ -350,8 +350,8 @@ Proxy QPS latest << avg（差距 > 5x）
 5. 对比连接数 vs QPS：**连接数均匀但 QPS 不均** → 客户端在均匀连接中集中发请求（如同一连接高频调用）
 
 **建议处置**：
-1. 🚨 排查业务客户端路由配置：是否有 client 硬编码 proxy IP？连接池是否均衡分配？
-2. 📌 将流量分散到其他 proxy（如调整客户端 DNS/LB/连接池配置）
+1. 排查业务客户端路由配置：是否有 client 硬编码 proxy IP？连接池是否均衡分配？
+2. 将流量分散到其他 proxy（如调整客户端 DNS/LB/连接池配置）
 3. ⏳ Master 内存 60% 接近阈值 — 高内存下 RocksDB 写入/读取延迟也会上升，长期需评估扩容
 
 ---
@@ -447,9 +447,9 @@ Proxy QPS latest << avg（差距 > 5x）
 | latest 状态 | 可能正常也可能仍高 | 仍高位 | 已恢复 |
 
 **建议处置**：
-1. 🚨 **紧急**：在异常 Proxy 机器上 `mtr <Master_IP>` 确认丢包率和延迟抖动
-2. 📋 确认 Master 所在机房（本例 Master 在同一城市但不同区），排查跨区网络链路
-3. 📌 如确认网络问题且短期无法修复：考虑将流量切换到正常机房的 Proxy（荔景），或扩容正常区域 Proxy
+1. **紧急**：在异常 Proxy 机器上 `mtr <Master_IP>` 确认丢包率和延迟抖动
+2. 确认 Master 所在机房（本例 Master 在同一城市但不同区），排查跨区网络链路
+3. 如确认网络问题且短期无法修复：考虑将流量切换到正常机房的 Proxy（荔景），或扩容正常区域 Proxy
 4. ⏳ 同时关注是否有大 value Key（如 lrange 2913ms 的列表）加重了网络传输负担
 
 **补充排查 — 大 Value 加重因素**：
@@ -557,7 +557,7 @@ Proxy QPS latest << avg（差距 > 5x）
 ## 通用区分矩阵
 
 | 模式 | Proxy 延迟 | Master 延迟 | Master CPU | 持续时间 | 命令分布 |
-|------|-----------|------------|-----------|---------|---------| 
+|------|-----------|------------|-----------|---------|---------|
 | Pipeline hash-slot 集中失败（根因12） | **正常**（无异常） | 正常 | 正常（<10%） | 秒级间歇交替 | 固定 key 子集 error |
 | Proxy→Master 网络分区抖动（根因11） | **按机房分区**：部分高(秒级)，部分正常 | 正常（2~3ms） | 正常或短暂冲高 | 间歇持续 | 所有命令均慢 |
 | Proxy QPS分配不均（根因13） | 全部偏高（1ms+） | 正常（avg 6%） | 正常（<10%） | 持续 | set/type偏高，单proxy QPS 5~6x |

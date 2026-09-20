@@ -109,7 +109,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.promql_query_metrics_with_instance
 
 ## 报告输出格式
 
-### 📈 主从延迟趋势（过去 12 小时）
+### 主从延迟趋势（过去 12 小时）
 
 | 时间点 | 延迟(秒) | 趋势 |
 |--------|----------|------|
@@ -118,7 +118,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.promql_query_metrics_with_instance
 - 延迟开始时间: `<time>`
 - 延迟趋势: 持续增大 / 趋于稳定 / 逐步恢复
 
-### 🔄 复制状态 (Slave Status)
+### 复制状态 (Slave Status)
 
 | 检查项 | 结果 | 说明 |
 |--------|------|------|
@@ -132,13 +132,13 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.promql_query_metrics_with_instance
 | Read_Master_Log_Pos | `<pos>` | IO 线程对应主库 binlog 位置 |
 | Relay_Log_Space | `<size>` | relay log 占用的磁盘空间（积压量） |
 
-### 📝 Binlog 事件分析
+### Binlog 事件分析
 
 展示 master 上 slave 正在执行位置的 binlog 事件内容，分析是否有大批量操作。
 
 如果在 `Step 3: 查看 master binlog 事件` 中，看到有大量重复的 Event_type（比如 `Delete_rows`），可以从 Table_map 中看到库表名，报告结束可以询问用户是否需要看下这个库表结构。
 
-### 💻 资源使用情况
+### 资源使用情况
 
 #### CPU 使用率
 

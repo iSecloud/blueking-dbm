@@ -158,7 +158,7 @@ python3 {SKILL_DIR}/scripts/run_analysis.py --instance <ip:port> --proxy \
 
 - `findings` 为空 → 一句话："实例 \<address\>（\<角色\>）连接状况正常（总连接 N，活跃 N）"
 - `findings` 非空 → 按 severity 排列：
-  - severity 标签：🔴 high / 🟡 medium / 🔵 low
+  - severity 标签： high /  medium /  low
   - `title`（脚本已生成中文标题）
   - `detail`（如有）
   - `pattern_analysis`（如有）
@@ -193,10 +193,10 @@ python3 {SKILL_DIR}/scripts/run_analysis.py --instance <ip:port> --proxy \
 ### Master <address>
 总连接: N | 活跃: N | 空闲: N
 
-🔴 发现 N 个长时间 Sleep 连接...
+ 发现 N 个长时间 Sleep 连接...
    **辅助定位 SQL**：（原样输出 actions 数组中的每条 SQL）
 
-🟡 空闲连接占比过高...
+ 空闲连接占比过高...
    **辅助定位 SQL**：（原样输出 actions 数组中的每条 SQL）
 
 #### 交叉验证

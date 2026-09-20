@@ -66,7 +66,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.mysql_metrics_query_by_metric_name
 
 ## 报告输出格式
 
-### 🚨 实例连接状态
+### 实例连接状态
 
 | 检查项 | 结果 |
 |--------|------|
@@ -75,13 +75,13 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-metrics.mysql_metrics_query_by_metric_name
 
 ⚠️ **如果 Processlist 获取失败**，在此处醒目提示：
 
-> 🔴 **实例当前仍然无法连接，MySQL 可能仍处于 hang 状态，需要紧急人工介入！**
+> **实例当前仍然无法连接，MySQL 可能仍处于 hang 状态，需要紧急人工介入！**
 
-### 📈 连接数趋势
+### 连接数趋势
 
 简要描述连接数变化趋势，标注异常拐点。
 
-### 📈 QPS 趋势
+### QPS 趋势
 
 简要描述 QPS 变化趋势，标注异常拐点。
 

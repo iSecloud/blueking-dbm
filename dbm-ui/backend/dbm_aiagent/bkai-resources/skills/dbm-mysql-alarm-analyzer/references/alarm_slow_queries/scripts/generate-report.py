@@ -1146,7 +1146,7 @@ def generate_html(
         <!-- 顶部栏 -->
         <div class="top-bar">
             <div class="top-bar-left">
-                <h1>🐢 慢查询分析报告</h1>
+                <h1> 慢查询分析报告</h1>
                 <div class="top-bar-meta">
                     <span>集群: <strong>{escape(domain)}</strong></span>
                     <span>时间: {escape(start_time)} ~ {escape(end_time)}</span>
@@ -1155,9 +1155,9 @@ def generate_html(
             </div>
             <div class="top-bar-right">
                 <button class="filter-btn active" onclick="filterRows('all')">全部({count})</button>
-                <button class="filter-btn" onclick="filterRows('critical')">🔴 {critical_count}</button>
-                <button class="filter-btn" onclick="filterRows('warning')">🟡 {warning_count}</button>
-                <button class="filter-btn" onclick="filterRows('normal')">🟢 {normal_count}</button>
+                <button class="filter-btn" onclick="filterRows('critical')"> {critical_count}</button>
+                <button class="filter-btn" onclick="filterRows('warning')"> {warning_count}</button>
+                <button class="filter-btn" onclick="filterRows('normal')"> {normal_count}</button>
                 <input type="text" class="search-input" placeholder="搜索 SQL / 表名..." oninput="searchRows(this.value)">
                 <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="切换亮色/暗色模式">☀️ 亮色</button>
             </div>
@@ -1176,7 +1176,7 @@ def generate_html(
         <!-- AI 总结区域 -->
         <div class="ai-summary-panel" id="aiSummaryPanel">
             <div class="ai-summary-toggle" onclick="toggleSummary()">
-                <span>🤖 AI 综合诊断总结 <span class="toggle-hint">👈 点击展开/收起</span></span>
+                <span> AI 综合诊断总结 <span class="toggle-hint"> 点击展开/收起</span></span>
                 <div class="toggle-right">
                     <span class="toggle-btn" id="toggleBtnText">收起 ▲</span>
                     <span class="toggle-arrow">▼</span>
@@ -1224,7 +1224,7 @@ def generate_html(
         <!-- 下面板：详情 -->
         <div class="bottom-panel" id="bottomPanel">
             <div class="detail-placeholder" id="detailPlaceholder">
-                <span>👆 点击上方查询行查看详情</span>
+                <span> 点击上方查询行查看详情</span>
             </div>
             <div id="detailView" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
                 <div class="detail-header detail-tabs" id="detailTabs">
@@ -1424,20 +1424,20 @@ def generate_html(
             }}
             if (a.problem) {{
                 html += `<div class="analysis-section">
-                    <div class="analysis-section-title">🔍 问题诊断</div>
+                    <div class="analysis-section-title"> 问题诊断</div>
                     <p>${{escapeHtml(a.problem)}}</p>
                 </div>`;
             }}
             if (a.root_cause) {{
                 html += `<div class="analysis-section">
-                    <div class="analysis-section-title">🎯 根因分析</div>
+                    <div class="analysis-section-title"> 根因分析</div>
                     <p>${{escapeHtml(a.root_cause)}}</p>
                 </div>`;
             }}
             if (a.suggestions && a.suggestions.length > 0) {{
                 const items = a.suggestions.map(s => `<li>${{escapeHtml(s)}}</li>`).join('');
                 html += `<div class="analysis-section">
-                    <div class="analysis-section-title">💡 优化建议</div>
+                    <div class="analysis-section-title"> 优化建议</div>
                     <ol class="suggestion-list">${{items}}</ol>
                 </div>`;
             }}
@@ -1768,7 +1768,7 @@ def generate_html(
             // 最紧急问题（突出显示）
             if (summaryData.most_urgent) {{
                 html += `<div class="summary-block urgent">
-                    <div class="summary-block-title">🚨 最紧急问题</div>
+                    <div class="summary-block-title"> 最紧急问题</div>
                     <p>${{escapeHtml(summaryData.most_urgent)}}</p>
                 </div>`;
             }}
@@ -1776,7 +1776,7 @@ def generate_html(
             // 根因归纳
             if (summaryData.root_cause_summary) {{
                 html += `<div class="summary-block">
-                    <div class="summary-block-title">🎯 综合根因</div>
+                    <div class="summary-block-title"> 综合根因</div>
                     <p>${{escapeHtml(summaryData.root_cause_summary)}}</p>
                 </div>`;
             }}
@@ -1785,7 +1785,7 @@ def generate_html(
             if (summaryData.key_findings && summaryData.key_findings.length > 0) {{
                 const items = summaryData.key_findings.map(f => `<li>${{escapeHtml(f)}}</li>`).join('');
                 html += `<div class="summary-block">
-                    <div class="summary-block-title">📋 关键发现</div>
+                    <div class="summary-block-title"> 关键发现</div>
                     <ul>${{items}}</ul>
                 </div>`;
             }}
@@ -1821,7 +1821,7 @@ def generate_html(
                 btn.textContent = '☀️ 亮色';
                 localStorage.setItem('theme', 'light');
             }} else {{
-                btn.textContent = '🌙 暗色';
+                btn.textContent = ' 暗色';
                 localStorage.setItem('theme', 'dark');
             }}
         }}
@@ -1832,7 +1832,7 @@ def generate_html(
             if (saved === 'dark') {{
                 // 用户主动选择了暗色
                 document.documentElement.classList.remove('light');
-                document.getElementById('themeBtn').textContent = '🌙 暗色';
+                document.getElementById('themeBtn').textContent = ' 暗色';
             }} else {{
                 // 默认亮色
                 document.documentElement.classList.add('light');

@@ -166,7 +166,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-capacity.mysql_query_table_size \
 
 ## 报告输出格式
 
-### 📈 磁盘空间趋势（过去 7 天）
+### 磁盘空间趋势（过去 7 天）
 
 | 指标 | 7天前 | 当前值 | 增长量 | 日均增长 | 趋势 |
 |------|-------|--------|--------|---------|------|
@@ -175,7 +175,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-capacity.mysql_query_table_size \
 
 趋势描述：用文字说明磁盘增长模式，是否存在突增时间点，按当前趋势预估多久会打满。
 
-### 🗂 磁盘目录占用明细（来自主机实际扫描）
+### 磁盘目录占用明细（来自主机实际扫描）
 
 **告警分区概况**
 
@@ -210,7 +210,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-capacity.mysql_query_table_size \
 
 > 若 Step 2 作业执行失败或超时，此节写明"磁盘目录明细获取失败（原因）"，并说明后续结论仅基于监控指标与库表大小。
 
-### 💾 数据库大小分布
+### 数据库大小分布
 
 | # | 数据库名 | 大小 | 占比 |
 |---|---------|------|------|
@@ -218,7 +218,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-capacity.mysql_query_table_size \
 | 2 | ... | xx GB | xx% |
 | ... | ... | ... | ... |
 
-### 📊 Top 20 大表
+### Top 20 大表
 
 | # | 数据库 | 表名 | 数据大小 | 索引大小 | 总大小 |
 |---|--------|------|---------|---------|--------|

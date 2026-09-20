@@ -1,7 +1,7 @@
 ---
 name: dbm-redis-proxy-diagnose
 description: Redis Proxy 异常排查 skill。当 Proxy 出现异常时触发，覆盖连接数、延迟、错误率等排查流程。
-metadata: {"version":"1.0.3","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-redis-proxy-diagnose","openclaw":{"category":"tencent","emoji":"🦈","requires":{"env":[]}}}
+metadata: {"version":"1.0.3","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-redis-proxy-diagnose","openclaw":{"category":"tencent","emoji":"","requires":{"env":[]}}}
 ---
 
 ## 0x00 工时记录（必须执行）
@@ -39,7 +39,7 @@ node "/projects/.hermes/home/.bkai/openclaw-runtime/append-skill-event.js" "redi
 ---
 name: redis-proxy-diagnose
 description: Redis 个别 proxy 异常排查 skill。当出现以下情况时触发：集群访问耗时告警但 master 指标正常、慢查询分布不均（某1-2个 proxy 远超其他）、部分客户端超时而其他正常、proxy 节点 CPU/连接数异常。适用于 DBM 蓝鲸平台 TwemproxyRedis 集群。
-metadata: {"version":"1.0.0","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-redis-proxy-diagnose","openclaw":{"category":"tencent","emoji":"🦈","requires":{"env":[]}}}
+metadata: {"version":"1.0.0","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-redis-proxy-diagnose","openclaw":{"category":"tencent","emoji":"","requires":{"env":[]}}}
 ---
 
 # Redis Proxy 异常排查

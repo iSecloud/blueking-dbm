@@ -695,20 +695,20 @@ code{{font-family:'SF Mono',Consolas,monospace;font-size:12px;
 </div>
 
 <div class="nav">
-  <a onclick="document.getElementById('overview').scrollIntoView({{behavior:'smooth'}})">📋 概览</a>
-  <a onclick="document.getElementById('conclusion').scrollIntoView({{behavior:'smooth'}})">🏁 结论</a>
-  <a onclick="document.getElementById('charts').scrollIntoView({{behavior:'smooth'}})">📊 图表</a>
-  <a onclick="document.getElementById('slowlog').scrollIntoView({{behavior:'smooth'}})">🐌 慢查询</a>
-  <a onclick="document.getElementById('slowlog-detail').scrollIntoView({{behavior:'smooth'}})">🔍 慢查询明细</a>
-  <a onclick="document.getElementById('cpu').scrollIntoView({{behavior:'smooth'}})">🖥️ CPU</a>
-  <a onclick="document.getElementById('qps').scrollIntoView({{behavior:'smooth'}})">📈 QPS</a>
-  <a onclick="document.getElementById('slowlog-analysis').scrollIntoView({{behavior:'smooth'}})">🧠 慢查询分析</a>
+  <a onclick="document.getElementById('overview').scrollIntoView({{behavior:'smooth'}})"> 概览</a>
+  <a onclick="document.getElementById('conclusion').scrollIntoView({{behavior:'smooth'}})"> 结论</a>
+  <a onclick="document.getElementById('charts').scrollIntoView({{behavior:'smooth'}})"> 图表</a>
+  <a onclick="document.getElementById('slowlog').scrollIntoView({{behavior:'smooth'}})"> 慢查询</a>
+  <a onclick="document.getElementById('slowlog-detail').scrollIntoView({{behavior:'smooth'}})"> 慢查询明细</a>
+  <a onclick="document.getElementById('cpu').scrollIntoView({{behavior:'smooth'}})">️ CPU</a>
+  <a onclick="document.getElementById('qps').scrollIntoView({{behavior:'smooth'}})"> QPS</a>
+  <a onclick="document.getElementById('slowlog-analysis').scrollIntoView({{behavior:'smooth'}})"> 慢查询分析</a>
 </div>
 """
 
 # ── 概览卡片 ──────────────────────────────────────────────────────────
 HTML += """<div class="section" id="overview">
-  <div class="sec-title"><span class="ico">📋</span>综合概览</div>
+  <div class="sec-title"><span class="ico"></span>综合概览</div>
   <div class="cards">
 """
 for c in conclusions:
@@ -734,7 +734,7 @@ for c in conclusions:
       </div>
       {issues_html}
     </div>\n"""
-HTML += """  </div>
+HTML += """ </div>
 </div>
 
 """
@@ -742,7 +742,7 @@ HTML += """  </div>
 
 # ── 六、综合结论 ──────────────────────────────────────────────────────
 HTML += """<div class="section" id="conclusion">
-  <div class="sec-title"><span class="ico">🏁</span>六、综合结论</div>
+  <div class="sec-title"><span class="ico"></span>六、综合结论</div>
   <table>
     <thead><tr>
       <th>集群</th><th>慢查询</th><th>CPU avg 变化</th><th>CPU max 变化</th><th>QPS 变化</th><th>风险</th><th>结论</th>
@@ -771,26 +771,26 @@ for c in conclusions:
         f'    <tr><td class="domain-td">{esc(c["domain"])}</td>'
         f"<td>{sl_b}</td><td>{cpu_s}</td><td>{cpu_max_s}</td><td>{qps_s}</td><td>{risk_b}</td><td>{conc}</td></tr>\n"
     )
-HTML += "  </tbody></table>\n</div>\n\n"
+HTML += " </tbody></table>\n</div>\n\n"
 
 # ── 图表区 ────────────────────────────────────────────────────────────
 HTML += f"""<div class="section" id="charts">
-  <div class="sec-title"><span class="ico">📊</span>监控图表对比</div>
+  <div class="sec-title"><span class="ico"></span>监控图表对比</div>
   <div class="charts-grid">
     <div class="chart-box">
-      <h3>🖥️ CPU avg — Proxy/Spider (%)</h3>
+      <h3>️ CPU avg — Proxy/Spider (%)</h3>
       <div class="chart-wrap"><canvas id="chartCpuProxy"></canvas></div>
     </div>
     <div class="chart-box">
-      <h3>🖥️ CPU avg — Master/Remote-M (%)</h3>
+      <h3>️ CPU avg — Master/Remote-M (%)</h3>
       <div class="chart-wrap"><canvas id="chartCpuMaster"></canvas></div>
     </div>
     <div class="chart-box">
-      <h3>📈 QPS avg — Master/Spider</h3>
+      <h3> QPS avg — Master/Spider</h3>
       <div class="chart-wrap"><canvas id="chartQps"></canvas></div>
     </div>
     <div class="chart-box">
-      <h3>🐌 新增慢查询数量</h3>
+      <h3> 新增慢查询数量</h3>
       <div class="chart-wrap"><canvas id="chartSlowlog"></canvas></div>
     </div>
   </div>
@@ -800,7 +800,7 @@ HTML += f"""<div class="section" id="charts">
 
 # ── 一、新增慢查询汇总 ─────────────────────────────────────────────────
 HTML += """<div class="section" id="slowlog">
-  <div class="sec-title"><span class="ico">🐌</span>一、新增慢查询汇总（完全匹配模式）</div>
+  <div class="sec-title"><span class="ico"></span>一、新增慢查询汇总（完全匹配模式）</div>
   <table>
     <thead><tr>
       <th>集群</th>
@@ -816,11 +816,11 @@ for domain in DOMAINS:
     b = badge(f"⚠️ +{n}", "warn") if n > 0 else badge("✅ 无新增", "ok")
     new_td = f"<b>{n}</b>" if n > 0 else "0"
     HTML += f'      <tr><td class="domain-td">{esc(domain)}</td><td class="num">{len(r["today"])}</td><td class="num">{len(r["yest"])}</td><td class="num">{new_td}</td><td>{b}</td></tr>\n'
-HTML += "    </tbody></table>\n</div>\n\n"
+HTML += " </tbody></table>\n</div>\n\n"
 
 # ── 二、新增慢查询明细（含 EXPLAIN 索引分析） ────────────────────────────
 HTML += '<div class="section" id="slowlog-detail">\n'
-HTML += '  <div class="sec-title"><span class="ico">🔍</span>二、新增慢查询明细（含索引分析）</div>\n'
+HTML += ' <div class="sec-title"><span class="ico"></span>二、新增慢查询明细（含索引分析）</div>\n'
 has_new = any(slowlog_data[d]["new"] for d in DOMAINS)
 if not has_new:
     HTML += '  <p style="color:#27ae60;font-weight:600;padding:8px 0">✅ 所有集群均无新增慢查询</p>\n'
@@ -899,10 +899,10 @@ else:
                                 f'<div class="ex-issue">⚠️ 单次最慢 {qt}s，rows_examined={rex_int}，关注索引覆盖</div>'
                             )
                     if cnt and int(cnt) > 1000:
-                        adv_parts.append(f'<div class="ex-suggest">💡 执行 {int(cnt):,} 次，高频 SQL，优先优化</div>')
+                        adv_parts.append(f'<div class="ex-suggest"> 执行 {int(cnt):,} 次，高频 SQL，优先优化</div>')
                     # EXPLAIN 分析建议
                     for s in suggestions:
-                        adv_parts.append(f'<div class="ex-suggest">💡 {esc(s)}</div>')
+                        adv_parts.append(f'<div class="ex-suggest"> {esc(s)}</div>')
                     for i in issues:
                         adv_parts.append(f'<div class="ex-issue">⚠️ {esc(i)}</div>')
                     if ex_extra:
@@ -910,9 +910,9 @@ else:
                     # 追加 schema 分析建议
                     if schema_adv:
                         if schema_info:
-                            adv_parts.append(f'<div class="ex-extra">📋 {esc(schema_info)}</div>')
+                            adv_parts.append(f'<div class="ex-extra"> {esc(schema_info)}</div>')
                         for a in schema_adv:
-                            adv_parts.append(f'<div class="ex-suggest">💡 {esc(a)}</div>')
+                            adv_parts.append(f'<div class="ex-suggest"> {esc(a)}</div>')
                     if not adv_parts:
                         adv_parts.append('<div class="ex-ok">✅ 索引使用正常</div>')
                     advice = "".join(adv_parts)
@@ -921,22 +921,22 @@ else:
                 elif ex_status == "insert_values":
                     ex_type_td = ex_key_td = ex_rows = "—"
                     adv_lines = schema_adv or ["INSERT VALUES 写操作，无索引扫描路径"]
-                    advice = "".join(f'<div class="ex-suggest">💡 {esc(a)}</div>' for a in adv_lines)
+                    advice = "".join(f'<div class="ex-suggest"> {esc(a)}</div>' for a in adv_lines)
                     if schema_info:
-                        advice = f'<div class="ex-extra">📋 {esc(schema_info)}</div>' + advice
+                        advice = f'<div class="ex-extra"> {esc(schema_info)}</div>' + advice
                 elif ex_status == "skip_type":
                     ex_type_td = ex_key_td = ex_rows = "—"
                     advice = '<div class="ex-na">该类型不适用 EXPLAIN</div>'
                 elif ex_status == "no_db":
                     ex_type_td = ex_key_td = ex_rows = "—"
                     adv_lines = schema_adv or ["db 字段为空，无法执行 EXPLAIN"]
-                    advice = "".join(f'<div class="ex-suggest">💡 {esc(a)}</div>' for a in adv_lines)
+                    advice = "".join(f'<div class="ex-suggest"> {esc(a)}</div>' for a in adv_lines)
                 else:
                     ex_type_td = ex_key_td = ex_rows = "—"
                     adv_lines = schema_adv or [f"EXPLAIN 未执行 ({ex_status})"]
-                    advice = "".join(f'<div class="ex-suggest">💡 {esc(a)}</div>' for a in adv_lines)
+                    advice = "".join(f'<div class="ex-suggest"> {esc(a)}</div>' for a in adv_lines)
                     if schema_info:
-                        advice = f'<div class="ex-extra">📋 {esc(schema_info)}</div>' + advice
+                        advice = f'<div class="ex-extra"> {esc(schema_info)}</div>' + advice
                 _has_issue, _ = has_real_issue(row, explain_data, domain)
                 _new_badge = badge("⚠️ 有风险", "warn") if _has_issue else badge("✅ 无风险", "ok")
                 _row_cls = ""
@@ -955,7 +955,7 @@ HTML += "</div>\n\n"
 
 # ── 三、CPU 对比 ──────────────────────────────────────────────────────
 HTML += f"""<div class="section" id="cpu">
-  <div class="sec-title"><span class="ico">🖥️</span>三、CPU 对比（单位 %）
+  <div class="sec-title"><span class="ico">️</span>三、CPU 对比（单位 %）
     <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px">基准：{esc(args.metrics_baseline_start)} ~ {esc(args.metrics_baseline_end)}</span>
   </div>
   <table>
@@ -1000,11 +1000,11 @@ for domain in DOMAINS:
             f'<td class="num">{"N/A" if ym is None else f"{ym:.2f}%"}</td>'
             f"<td>{chg}</td><td>{chg_max}</td></tr>\n"
         )
-HTML += "  </tbody></table>\n</div>\n\n"
+HTML += " </tbody></table>\n</div>\n\n"
 
 # ── 四、QPS 对比 ──────────────────────────────────────────────────────
 HTML += f"""<div class="section" id="qps">
-  <div class="sec-title"><span class="ico">📈</span>四、QPS 对比
+  <div class="sec-title"><span class="ico"></span>四、QPS 对比
     <span style="font-size:12px;font-weight:400;color:#888;margin-left:8px">基准：{esc(args.metrics_baseline_start)} ~ {esc(args.metrics_baseline_end)}</span>
   </div>
   <table>
@@ -1051,11 +1051,11 @@ for domain in DOMAINS:
             f'<td class="num">{"N/A" if ym is None else f"{ym:.1f}"}</td>'
             f"<td>{chg}</td><td>{chg_max}</td></tr>\n"
         )
-HTML += "  </tbody></table>\n</div>\n\n"
+HTML += " </tbody></table>\n</div>\n\n"
 
 # ── 五、集群慢查询总体分析与优化建议 ─────────────────────────────────────
 HTML += '<div class="section" id="slowlog-analysis">\n'
-HTML += '  <div class="sec-title"><span class="ico">🧠</span>五、集群慢查询总体分析与优化建议</div>\n'
+HTML += ' <div class="sec-title"><span class="ico"></span>五、集群慢查询总体分析与优化建议</div>\n'
 
 DEFAULT_TOPN = 20
 
@@ -1121,7 +1121,7 @@ for domain in DOMAINS:
         if not advices:
             advices.append("暂无明显异常，持续观察")
         if ex_sch:
-            advices.insert(0, f"📋 {ex_sch}")
+            advices.insert(0, f" {ex_sch}")
 
         # EXPLAIN 字段
         _t_lower = (ex_r.get("type") or "").lower() if ex_r else ""
@@ -1195,7 +1195,7 @@ for domain in DOMAINS:
         <option value="ok">仅无风险</option>
       </select>
       <button onclick="saQuery('{domain_safe}')"
-        style="padding:3px 14px;background:#2563a8;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer">🔍 查询</button>
+        style="padding:3px 14px;background:#2563a8;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer"> 查询</button>
       <button onclick="saExport('{domain_safe}','{domain}')"
         style="padding:3px 12px;background:#27ae60;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer">⬇ 导出 Excel</button>
       <span id="count_{domain_safe}" style="font-size:12px;color:#888;margin-left:4px">共 {total_rows} 条</span>
@@ -1210,7 +1210,7 @@ for domain in DOMAINS:
 
 HTML += "</div>\n\n"
 HTML += """\n<script>\n"""
-HTML += "// ── 慢查询总体分析：筛选（前端 display）+ 导出 Excel ──\nfunction saQuery(ds) {\n  try {\n    var topn    = parseInt(document.getElementById('topn_' + ds).value) || 20;\n    var risk    = document.getElementById('risk_' + ds).value;\n    var allData = (window.__saData || {})[ds] || [];\n    var tbl     = document.getElementById('tbl_' + ds);\n    var countEl = document.getElementById('count_' + ds);\n    var hdSub   = document.getElementById('hd_sub_' + ds);\n    if (!tbl) return;\n\n    // 按用户输入 N 计算 topSet：qt_sum TopN + cnt TopN 去重\n    var bySum = allData.slice().sort(function(a,b){return b.qt_sum - a.qt_sum;}).slice(0, topn).map(function(r){return r.digest;});\n    var byCnt = allData.slice().sort(function(a,b){return b.cnt   - a.cnt;  }).slice(0, topn).map(function(r){return r.digest;});\n    var topSet = {};\n    bySum.concat(byCnt).forEach(function(d){ topSet[d] = 1; });\n    var topCount = Object.keys(topSet).length;\n\n    // 遍历行，按 topSet + 风险筛选决定显示/隐藏\n    var rows = tbl.querySelectorAll('tbody tr');\n    var shown = 0;\n    rows.forEach(function(tr) {\n      var code   = tr.querySelector('code');\n      var digest = code ? code.textContent.trim() : '';\n      var issue  = tr.getAttribute('data-issue') === '1';\n      var inTop  = !!topSet[digest];\n      var matchRisk = (risk === 'all') ||\n                      (risk === 'issue' &&  issue) ||\n                      (risk === 'ok'    && !issue);\n      if (inTop && matchRisk) { tr.style.display = ''; shown++; }\n      else                    { tr.style.display = 'none'; }\n    });\n\n    if (countEl) countEl.textContent = '当前显示 ' + shown + ' 条（qt_sum Top' + topn + ' + cnt Top' + topn + ' 去重 ' + topCount + ' 条）';\n    if (hdSub)   hdSub.textContent   = '· qt_sum Top' + topn + ' + cnt Top' + topn + ' 去重 ' + topCount + ' 条，当前显示 ' + shown + ' 条';\n  } catch(e) { console.error('saQuery error:', e); }\n}\n// ── 导出 CSV ──\nfunction saExport(ds, domainName) {\n  var tbl = document.getElementById('tbl_' + ds);\n  if (!tbl) return;\n  var visibleRows = [];\n  tbl.querySelectorAll('tbody tr').forEach(function(tr) {\n    if (tr.style.display !== 'none') visibleRows.push(tr);\n  });\n  if (!visibleRows.length) { alert('当前无可见数据'); return; }\n  var cols = [];\n  tbl.querySelectorAll('thead th').forEach(function(th) {\n    cols.push(th.textContent.replace(/\\s+/g,' ').trim());\n  });\n  function csvCell(s) {\n    s = String(s || '').replace(/\\r?\\n/g,' ');\n    if (s.indexOf(',')>=0||s.indexOf('\"')>=0) s='\"'+s.replace(/\"/g,'\"\"')+'\"';\n    return s;\n  }\n  var lines = [cols.map(csvCell).join(',')];\n  visibleRows.forEach(function(tr) {\n    var cells = [];\n    tr.querySelectorAll('td').forEach(function(td){ cells.push(csvCell(td.innerText||td.textContent)); });\n    lines.push(cells.join(','));\n  });\n  var csv = '\\uFEFF' + lines.join('\\r\\n');\n  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});\n  var url  = URL.createObjectURL(blob);\n  var a    = document.createElement('a');\n  var date = new Date().toISOString().slice(0,10).replace(/-/g,'');\n  a.href=url; a.download='slowlog_'+(domainName||ds)+'_'+date+'.csv';\n  document.body.appendChild(a); a.click();\n  document.body.removeChild(a);\n  URL.revokeObjectURL(url);\n}\n\n// ── 列宽拖拽 ──\nfunction makeResizable(tableId) {\n  var table = document.getElementById(tableId);\n  if (!table) return;\n  var ths = table.querySelectorAll('thead th');\n  ths.forEach(function(th) {\n    th.style.position = 'relative';\n    var handle = document.createElement('div');\n    handle.style.cssText = 'position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;z-index:1';\n    handle.addEventListener('mousedown', function(e) {\n      e.preventDefault();\n      var startX = e.pageX, startW = th.offsetWidth;\n      function onMove(e) { th.style.width = Math.max(40, startW + e.pageX - startX) + 'px'; }\n      function onUp()   { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }\n      document.addEventListener('mousemove', onMove);\n      document.addEventListener('mouseup', onUp);\n    });\n    th.appendChild(handle);\n  });\n}\n\n// ── 初始化 ──\nfunction saInitAll() {\n  var data = window.__saData || {};\n  var keys = Object.keys(data);\n  if (!keys.length) { setTimeout(saInitAll, 50); return; }\n  keys.forEach(function(ds) {\n    var wrap = document.getElementById('tbl_wrap_' + ds);\n    if (wrap) { saQuery(ds); makeResizable('tbl_' + ds); }\n    else { setTimeout(function(){ saQuery(ds); makeResizable('tbl_' + ds); }, 100); }\n  });\n}\n\nif (document.readyState === 'loading') {\n  document.addEventListener('DOMContentLoaded', saInitAll);\n} else {\n  saInitAll();\n}\n"
+HTML += "// ── 慢查询总体分析：筛选（前端 display）+ 导出 Excel ──\nfunction saQuery(ds) {\n try {\n var topn = parseInt(document.getElementById('topn_' + ds).value) || 20;\n var risk = document.getElementById('risk_' + ds).value;\n var allData = (window.__saData || {})[ds] || [];\n var tbl = document.getElementById('tbl_' + ds);\n var countEl = document.getElementById('count_' + ds);\n var hdSub = document.getElementById('hd_sub_' + ds);\n if (!tbl) return;\n\n // 按用户输入 N 计算 topSet：qt_sum TopN + cnt TopN 去重\n var bySum = allData.slice().sort(function(a,b){return b.qt_sum - a.qt_sum;}).slice(0, topn).map(function(r){return r.digest;});\n var byCnt = allData.slice().sort(function(a,b){return b.cnt - a.cnt; }).slice(0, topn).map(function(r){return r.digest;});\n var topSet = {};\n bySum.concat(byCnt).forEach(function(d){ topSet[d] = 1; });\n var topCount = Object.keys(topSet).length;\n\n // 遍历行，按 topSet + 风险筛选决定显示/隐藏\n var rows = tbl.querySelectorAll('tbody tr');\n var shown = 0;\n rows.forEach(function(tr) {\n var code = tr.querySelector('code');\n var digest = code ? code.textContent.trim() : '';\n var issue = tr.getAttribute('data-issue') === '1';\n var inTop = !!topSet[digest];\n var matchRisk = (risk === 'all') ||\n (risk === 'issue' && issue) ||\n (risk === 'ok' && !issue);\n if (inTop && matchRisk) { tr.style.display = ''; shown++; }\n else { tr.style.display = 'none'; }\n });\n\n if (countEl) countEl.textContent = '当前显示 ' + shown + ' 条（qt_sum Top' + topn + ' + cnt Top' + topn + ' 去重 ' + topCount + ' 条）';\n if (hdSub) hdSub.textContent = '· qt_sum Top' + topn + ' + cnt Top' + topn + ' 去重 ' + topCount + ' 条，当前显示 ' + shown + ' 条';\n } catch(e) { console.error('saQuery error:', e); }\n}\n// ── 导出 CSV ──\nfunction saExport(ds, domainName) {\n var tbl = document.getElementById('tbl_' + ds);\n if (!tbl) return;\n var visibleRows = [];\n tbl.querySelectorAll('tbody tr').forEach(function(tr) {\n if (tr.style.display !== 'none') visibleRows.push(tr);\n });\n if (!visibleRows.length) { alert('当前无可见数据'); return; }\n var cols = [];\n tbl.querySelectorAll('thead th').forEach(function(th) {\n cols.push(th.textContent.replace(/\\s+/g,' ').trim());\n });\n function csvCell(s) {\n s = String(s || '').replace(/\\r?\\n/g,' ');\n if (s.indexOf(',')>=0||s.indexOf('\"')>=0) s='\"'+s.replace(/\"/g,'\"\"')+'\"';\n return s;\n }\n var lines = [cols.map(csvCell).join(',')];\n visibleRows.forEach(function(tr) {\n var cells = [];\n tr.querySelectorAll('td').forEach(function(td){ cells.push(csvCell(td.innerText||td.textContent)); });\n lines.push(cells.join(','));\n });\n var csv = '\\uFEFF' + lines.join('\\r\\n');\n var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});\n var url = URL.createObjectURL(blob);\n var a = document.createElement('a');\n var date = new Date().toISOString().slice(0,10).replace(/-/g,'');\n a.href=url; a.download='slowlog_'+(domainName||ds)+'_'+date+'.csv';\n document.body.appendChild(a); a.click();\n document.body.removeChild(a);\n URL.revokeObjectURL(url);\n}\n\n// ── 列宽拖拽 ──\nfunction makeResizable(tableId) {\n var table = document.getElementById(tableId);\n if (!table) return;\n var ths = table.querySelectorAll('thead th');\n ths.forEach(function(th) {\n th.style.position = 'relative';\n var handle = document.createElement('div');\n handle.style.cssText = 'position:absolute;right:0;top:0;width:5px;height:100%;cursor:col-resize;user-select:none;z-index:1';\n handle.addEventListener('mousedown', function(e) {\n e.preventDefault();\n var startX = e.pageX, startW = th.offsetWidth;\n function onMove(e) { th.style.width = Math.max(40, startW + e.pageX - startX) + 'px'; }\n function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }\n document.addEventListener('mousemove', onMove);\n document.addEventListener('mouseup', onUp);\n });\n th.appendChild(handle);\n });\n}\n\n// ── 初始化 ──\nfunction saInitAll() {\n var data = window.__saData || {};\n var keys = Object.keys(data);\n if (!keys.length) { setTimeout(saInitAll, 50); return; }\n keys.forEach(function(ds) {\n var wrap = document.getElementById('tbl_wrap_' + ds);\n if (wrap) { saQuery(ds); makeResizable('tbl_' + ds); }\n else { setTimeout(function(){ saQuery(ds); makeResizable('tbl_' + ds); }, 100); }\n });\n}\n\nif (document.readyState === 'loading') {\n document.addEventListener('DOMContentLoaded', saInitAll);\n} else {\n saInitAll();\n}\n"
 HTML += """</script>\n"""
 HTML += f"""
 <div class="footer">mysql-perf-compare-report &nbsp;·&nbsp; 生成于 {now}</div>
@@ -1348,4 +1348,4 @@ HTML_OUT = HTML.replace(CHARTJS_PLACEHOLDER, chartjs_safe, 1)
 
 with open(OUT_PATH, "w", encoding="utf-8") as f:
     f.write(HTML_OUT)
-print(f"HTML 报告已生成：{OUT_PATH}  ({len(HTML_OUT):,} bytes)")
+print(f"HTML 报告已生成：{OUT_PATH} ({len(HTML_OUT):,} bytes)")

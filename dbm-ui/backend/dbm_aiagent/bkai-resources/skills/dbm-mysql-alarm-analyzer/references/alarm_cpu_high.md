@@ -113,7 +113,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-slowlog.mysql_slowlog_query_aggregated \
 | 当前 CPU | `<current_value>` |
 | 告警时间 | `<base_time>` |
 
-### 📈 CPU & QPS 趋势（base_time 前 30 分钟）
+### CPU & QPS 趋势（base_time 前 30 分钟）
 
 | 指标 | 趋势描述 | 起始值 | 峰值 | 告警时值 |
 |------|---------|--------|------|---------|
@@ -122,7 +122,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-slowlog.mysql_slowlog_query_aggregated \
 
 用趋势文字或简易图示说明 CPU 和 QPS 的关联关系。
 
-### 📋 连接会话分析
+### 连接会话分析
 
 #### 按 State 聚合
 
@@ -136,7 +136,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-slowlog.mysql_slowlog_query_aggregated \
 |----------|--------|------|
 | ... | ... | ... |
 
-### 🐢 慢查询 Top N（base_time 前 30 分钟）
+### 慢查询 Top N（base_time 前 30 分钟）
 
 | # | SQL 指纹 | 最大耗时 | 执行次数 | 扫描行数 |
 |---|---------|---------|---------|---------|

@@ -64,7 +64,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-query.mysql_query_show_proxy_processlist \
 
 ## 报告输出格式
 
-### 🔒 长空闲事务详情
+### 长空闲事务详情
 
 | 字段 | 值 |
 |------|-----|

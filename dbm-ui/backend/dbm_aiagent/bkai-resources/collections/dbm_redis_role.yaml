@@ -84,5 +84,5 @@ spec:
 
         | 工具 | 用途 | 风险等级 | 安全规则 |
         |------|------|----------|----------|
-        | `redis_bill_submit_bill_flush_db` | 提交清档工单 | 🔴 高危 | **必须获得用户明确的二次确认后才能提交，严禁直接提单** |
-        | `redis_bill_submit_bill_delete_key_by_regex` | 按正则删除 Key 工单 | 🔴 高危 | **必须获得用户明确的二次确认后才能提交，严禁直接提单** |
+        | `redis_bill_submit_bill_flush_db` | 提交清档工单 |  高危 | **必须获得用户明确的二次确认后才能提交，严禁直接提单** |
+        | `redis_bill_submit_bill_delete_key_by_regex` | 按正则删除 Key 工单 |  高危 | **必须获得用户明确的二次确认后才能提交，严禁直接提单** |

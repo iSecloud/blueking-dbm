@@ -1,7 +1,7 @@
 ---
 name: dbm-redis-latency-diagnose
 description: Redis 集群延迟问题诊断 skill。当用户反馈 Redis 集群延迟高、访问慢、超时告警时触发。按照标准六步流程逐层排查：集群整体延迟趋势 → 命令级分析 → proxy 层是否全局/局部问题 → 后端 master 节点定位 → 节点 QPS/延迟/CPU 综合分析 → 结合慢日志验证。适用于 DBM 蓝鲸平台管理的所有 Redis 集群类型（TwemproxyRedisInstance、TwemproxyTendisSSDInstance、PredixyTendisplusCluster 等）。
-metadata: {"version":"1.0.5","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-redis-latency-diagnose","openclaw":{"category":"tencent","emoji":"🦈","requires":{"env":[]}}}
+metadata: {"version":"1.0.5","space_id":"1d3d86fa67bef8c3","bk_skill_code":"dbm-redis-latency-diagnose","openclaw":{"category":"tencent","emoji":"","requires":{"env":[]}}}
 ---
 
 # Redis 集群延迟问题诊断

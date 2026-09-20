@@ -63,10 +63,10 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-slowlog.mysql_slowlog_query_aggregated \
 
 在完成上述步骤后，按以下格式汇总输出（嵌入 Step 4 报告模板中）：
 
-### 📊 Processlist 分析
+### Processlist 分析
 （使用 mysql-processlist-analyzer 的标准输出格式）
 
-### 📈 性能指标趋势（base_time 前 30 分钟）
+### 性能指标趋势（base_time 前 30 分钟）
 
 | 指标 | 趋势描述 | 当前值 | 峰值 |
 |------|---------|--------|------|
@@ -74,7 +74,7 @@ dbm-mcp-cli call bkdbm-mcp-prod-mysql-slowlog.mysql_slowlog_query_aggregated \
 | 连接数 | 上升/平稳/下降 | xx | xx |
 | QPS | 上升/平稳/下降 | xx | xx |
 
-### 🐢 慢查询 Top 10
+### 慢查询 Top 10
 
 | # | SQL 指纹 | 最大耗时 | 执行次数 | 扫描行数 |
 |---|---------|---------|---------|---------|

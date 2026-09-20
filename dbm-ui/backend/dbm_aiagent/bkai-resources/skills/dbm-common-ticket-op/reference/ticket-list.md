@@ -6,7 +6,7 @@
 
 ⛔ **`bk_biz_id`、`ticket_ids`、`cluster_domains` 三个参数至少传一个**，全空会被服务端拒绝。
 
-📌 **`time_duration` 默认查 7 天**，必须主动传 `"7 00:00:00"`（后端默认只有 2 天，不传就覆盖不到）。用户明确指定其他时间范围时按用户的来。
+ **`time_duration` 默认查 7 天**，必须主动传 `"7 00:00:00"`（后端默认只有 2 天，不传就覆盖不到）。用户明确指定其他时间范围时按用户的来。
 
 ```bash
 dbm-mcp-cli call bkdbm-mcp-prod-ticket-op.ticket_op_ticket_list \
