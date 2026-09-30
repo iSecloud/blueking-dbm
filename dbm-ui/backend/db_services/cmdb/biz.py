@@ -83,7 +83,11 @@ def list_modules_by_biz(bk_biz_id: int, cluster_type: str) -> List[Dict]:
     """
     拉取业务 DB 模块，结合 dbconfig 批量拉取得到模块信息
     """
-    modules = DBModule.objects.filter(bk_biz_id=bk_biz_id, cluster_type=cluster_type)
+    # 本模块会在 db_meta.models 加载期间被导入，db_meta.api 只能延迟导入
+    from backend.db_meta.api.db_module.version import describe_modules_version
+
+    modules = list(DBModule.objects.filter(bk_biz_id=bk_biz_id, cluster_type=cluster_type))
+    version_views = describe_modules_version(modules)
     # 批量请求 dbconfig
     module_infos = request_multi_thread(
         func=DBConfigHandler(DBBaseConfig(cluster_type, ConfType.DEPLOY.value), True).get_level_config,
@@ -98,7 +102,7 @@ def list_modules_by_biz(bk_biz_id: int, cluster_type: str) -> List[Dict]:
                     }
                 )
             }
-            for module in DBModule.objects.filter(bk_biz_id=bk_biz_id, cluster_type=cluster_type)
+            for module in modules
         ],
         get_data=lambda x: x,
         in_order=True,
@@ -110,6 +114,7 @@ def list_modules_by_biz(bk_biz_id: int, cluster_type: str) -> List[Dict]:
             "name": module.db_module_name,
             "alias_name": module.alias_name,
             "db_module_info": module_infos[index][1],
+            "db_version_info": version_views.get(module.db_module_id, {}),
         }
         for index, module in enumerate(modules)
     ]
