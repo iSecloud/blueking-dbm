@@ -56,7 +56,10 @@ def validate_component_version(component: str, layer: DBModuleComponentVersion) 
             message=_("版本 {} 没有 {} 类型的已启用介质包").format(layer.db_version_id, layer.permit_os_type)
         )
 
+    # 合并结果为空表示该操作系统类型无限制，模块指定任意操作系统都允许
     package_os = os_map[layer.os_key]
+    if not package_os:
+        return
     rejected = [name for name in layer.permit_os if name not in package_os]
     if rejected:
         raise DBModuleVersionException(
@@ -69,6 +72,7 @@ def enabled_package_permit_os(db_version_ids: Iterable[int]) -> Dict[Tuple[int, 
 
     返回示例: {(1, "Linux"): ["tlinux-3.2", "tlinux-4"]}
     某个版本没有已启用的介质包时，结果里不会出现它。
+    有已启用介质包、但操作系统列表合并后为空，表示该操作系统类型无限制。
     """
     packages = (
         Package.objects.filter(db_version_id__in=set(db_version_ids), enable=True)

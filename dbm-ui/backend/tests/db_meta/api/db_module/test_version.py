@@ -216,6 +216,12 @@ class TestDBModuleComponentVersion:
         with pytest.raises(DBModuleVersionException):
             redis_module.current_db_version = {MachineType.PREDIXY.value: _layer(mysql, [])}
 
+    def test_unrestricted_package_os_allows_any_specified_os(self):
+        mysql = _make_version(MediumEnum.MySQL.value, "MySQL-8.0", "8.0.32.0.0.8", [])
+        validate_components(
+            {MachineType.SINGLE.value: DBModuleComponentVersion.from_dict(_layer(mysql, ["a", "b", "c"]))}
+        )
+
     def test_reject_follow_when_version_has_no_package(self):
         mysql = _make_version(MediumEnum.MySQL.value, "MySQL-8.0", "8.0.32.0.0.5", ["tlinux-3.2"])
         Package.objects.filter(db_version=mysql).update(enable=False)
