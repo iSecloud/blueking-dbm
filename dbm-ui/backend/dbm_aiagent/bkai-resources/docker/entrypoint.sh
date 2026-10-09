@@ -7,7 +7,7 @@
 #   BKAI_TENANT_ID      (默认 system)
 #   BKAI_PUBLISH        (默认 1，传 0 则只同步草稿)
 #   BKAI_PUBLISH_CONFIG_ONLY (默认 1)
-#   SKILL_BASE_IMAGE    (仓库前缀，拼到 /bkdbm-aidev-skills-env:<tag> 前)
+#   BKAI_SKILL_IMAGE_REPO    (仓库前缀，非空时以 / 结尾)
 set -euo pipefail
 
 PKG=/app/bkai-resources
@@ -37,8 +37,8 @@ if [[ "${PUBLISH}" == "1" ]]; then
   SYNC_ARGS+=(--publish "--publish_config_only=${PUBLISH_CONFIG_ONLY}")
 fi
 
-if [[ -n "${SKILL_BASE_IMAGE:-}" ]]; then
-  SYNC_ARGS+=(--var "SKILL_BASE_IMAGE=${SKILL_BASE_IMAGE}")
+if [[ -n "${BKAI_SKILL_IMAGE_REPO:-}" ]]; then
+  SYNC_ARGS+=(--var "BKAI_SKILL_IMAGE_REPO=${BKAI_SKILL_IMAGE_REPO}")
 fi
 
 bkai-init validate -f "${PKG}/bkai.yaml" --space "${SPACE}"
