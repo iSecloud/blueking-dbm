@@ -74,7 +74,7 @@ class DBVersionViewSet(viewsets.AuditedModelViewSet):
     }
 
     action_permission_map = {
-        ("list_pkg_types", "check_name_conflict", "list", "permit_os"): [],
+        ("list_pkg_types", "check_name_conflict", "list", "list_permit_os"): [],
     }
     default_permission_class = [
         ResourceActionPermission([ActionEnum.PACKAGE_MANAGE], ResourceEnum.DBTYPE, instance_getter)

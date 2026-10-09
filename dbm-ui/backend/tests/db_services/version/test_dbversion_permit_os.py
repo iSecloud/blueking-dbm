@@ -60,9 +60,9 @@ def _make_package(version: DBVersion, name: str, os_type: str, permit_os: list, 
 
 
 def _get_permit_os(version_id: int):
-    request = APIRequestFactory().get(f"/apis/version/dbversion/{version_id}/permit_os/")
+    request = APIRequestFactory().get(f"/apis/version/dbversion/{version_id}/list_permit_os/")
     force_authenticate(request, user=get_user_model()(username="admin"))
-    view = DBVersionViewSet.as_view({"get": "permit_os"})
+    view = DBVersionViewSet.as_view({"get": "list_permit_os"})
     with patch.object(DBVersionViewSet, "get_permissions", lambda self: []):
         return view(request, pk=version_id)
 
