@@ -115,7 +115,7 @@ dbm:
       pullPolicy: IfNotPresent
       tag: "latest"
     # 仅用于 helm template 暴露镜像地址，供流水线同步仓库；容器本身只 echo 1
-    # 同时作为 Skill Dockerfile 的 SKILL_BASE_IMAGE 默认来源
+    # Skill 仓库前缀可通过 BKAI_SKILL_IMAGE_REPO 环境变量覆盖，非空时以 / 结尾
     skillsEnvImage:
       registry: "mirrors.tencent.com"
       repository: "build/blueking/bkdbm-aidev-skills-env"
