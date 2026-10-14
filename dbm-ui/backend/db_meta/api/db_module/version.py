@@ -106,6 +106,7 @@ def _validate_layer(
     # 介质包不限制操作系统时，模块指定任意操作系统都允许
     if not package.os_names:
         return
+
     rejected = [name for name in layer.permit_os if name not in package.os_names]
     if rejected:
         raise DBModuleVersionException(
