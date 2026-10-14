@@ -21,7 +21,7 @@ from backend.db_services.ipchooser.constants import BkOsType
 class DBModuleComponentVersion:
     """DBModule.current_db_version_info_dict / target_db_version_info_dict 中单个组件的值。
 
-    permit_os 为空：跟随该 db_version 下已启用介质包的操作系统并集，介质包变化后读取结果跟着变。
+    permit_os 为空：跟随该 db_version 已启用介质包的操作系统，介质包变化后读取结果跟着变。
     permit_os 非空：固定范围，写入后不随介质包变化。
     tendbsingle 样例
     "single": {
@@ -44,10 +44,6 @@ class DBModuleComponentVersion:
     @property
     def follow_package(self) -> bool:
         return not self.permit_os
-
-    @property
-    def os_key(self) -> Tuple[int, str]:
-        return self.db_version_id, self.permit_os_type
 
     def to_dict(self) -> Dict:
         return {

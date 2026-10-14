@@ -68,20 +68,16 @@ def _get_permit_os(version_id: int):
 
 
 class TestDBVersionPermitOs:
-    def test_merge_enabled_packages_by_os_type(self):
+    def test_first_enabled_package(self):
         version = _make_version()
-        _make_package(version, "proxy-a.tar.gz", BkOsType.LINUX.value, ["tlinux-3.2"])
+        _make_package(version, "proxy-a.tar.gz", BkOsType.LINUX.value, ["centos-7"], enable=False)
         _make_package(version, "proxy-b.tar.gz", BkOsType.LINUX.value, ["tlinux-3.2", "tlinux-4"])
-        _make_package(version, "proxy-c.tar.gz", BkOsType.LINUX.value, ["centos-7"], enable=False)
-        _make_package(version, "proxy-d.tar.gz", BkOsType.WINDOWS.value, ["windows-2019"])
+        _make_package(version, "proxy-c.tar.gz", BkOsType.WINDOWS.value, ["windows-2019"])
 
         response = _get_permit_os(version.id)
 
         assert response.status_code == 200
-        assert sorted(response.data, key=lambda item: item["permit_os_type"]) == [
-            {"permit_os_type": BkOsType.LINUX.value, "permit_os": ["tlinux-3.2", "tlinux-4"]},
-            {"permit_os_type": BkOsType.WINDOWS.value, "permit_os": ["windows-2019"]},
-        ]
+        assert response.data == [{"permit_os_type": BkOsType.LINUX.value, "permit_os": ["tlinux-3.2", "tlinux-4"]}]
 
     def test_no_enabled_package(self):
         version = _make_version()

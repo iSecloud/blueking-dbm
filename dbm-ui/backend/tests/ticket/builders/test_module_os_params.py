@@ -118,6 +118,16 @@ class TestPatchModuleOsParams:
         assert resource_spec["remote"]["os_type"] == BkOsType.LINUX.value
         assert "os_names" not in resource_spec["remote"]
 
+    def test_no_enabled_package_only_sets_os_type(self):
+        single = _make_version(MediumEnum.MySQL.value, "8.0.32.0.0.17", ["tlinux-3.2"])
+        module = _make_module("single-no-pkg", ClusterType.TenDBSingle.value, {MachineType.SINGLE.value: (single, [])})
+        Package.objects.filter(db_version=single).update(enable=False)
+        resource_spec = {"backend": {"spec_id": 1, "count": 1}}
+
+        ResourceApplyParamBuilder.patch_module_os_params(resource_spec, "backend", module, AccessLayer.STORAGE)
+
+        assert resource_spec["backend"] == {"spec_id": 1, "count": 1, "os_type": BkOsType.LINUX.value}
+
     def test_skip_manual_hosts_and_unset_layer(self):
         backend = _make_version(MediumEnum.MySQL.value, "8.0.32.0.0.14", ["tlinux-3.2"])
         module = _make_module("ha-partial", ClusterType.TenDBHA.value, {MachineType.BACKEND.value: (backend, [])})

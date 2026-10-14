@@ -79,9 +79,22 @@ def list_bizs(user: str = "", action: ActionEnum = None) -> List[BIZModel]:
     return sorted(biz_list, key=lambda biz: (-biz.permission[ActionEnum.DB_MANAGE.id], biz.bk_biz_id))
 
 
-def _fetch_module_deploy_configs(bk_biz_id: int, cluster_type: str, modules):
-    """按模块顺序批量拉取部署配置。返回与 modules 等长，每项是 (请求参数, 配置)。"""
-    func = DBConfigHandler(DBBaseConfig(cluster_type, ConfType.DEPLOY.value), True).get_level_config
+def _fetch_module_deploy_configs(bk_biz_id: int, cluster_type: str, modules, ignore_error: bool = False) -> List[Dict]:
+    """按模块顺序批量拉取部署配置，返回与 modules 等长的配置列表。
+
+    ignore_error 为 True 时，单个模块拉取失败只记日志，该模块的配置为空字典。
+    """
+    get_level_config = DBConfigHandler(DBBaseConfig(cluster_type, ConfType.DEPLOY.value), True).get_level_config
+
+    def fetch(dbconfig_level_data: DBConfigLevelData) -> Dict:
+        try:
+            return get_level_config(dbconfig_level_data)
+        except Exception as err:  # pylint: disable=broad-except
+            if not ignore_error:
+                raise
+            logger.warning("fetch deploy config of module %s failed: %s", dbconfig_level_data.level_value, err)
+            return {}
+
     params_list = [
         {
             "dbconfig_level_data": DBConfigLevelData.from_dict(
@@ -95,8 +108,7 @@ def _fetch_module_deploy_configs(bk_biz_id: int, cluster_type: str, modules):
         }
         for module in modules
     ]
-    configs = request_multi_thread(func=func, params_list=params_list, get_data=lambda x: x, in_order=True)
-    return configs
+    return request_multi_thread(func=fetch, params_list=params_list, get_data=lambda x: x[1], in_order=True)
 
 
 def list_modules_by_biz(bk_biz_id: int, cluster_type: str) -> List[Dict]:
@@ -108,29 +120,29 @@ def list_modules_by_biz(bk_biz_id: int, cluster_type: str) -> List[Dict]:
 
     modules = list(DBModule.objects.filter(bk_biz_id=bk_biz_id, cluster_type=cluster_type))
     version_views = describe_modules_version(modules)
-    module_infos = _fetch_module_deploy_configs(bk_biz_id, cluster_type, modules)
+    configs = _fetch_module_deploy_configs(bk_biz_id, cluster_type, modules)
     return [
         {
             "bk_biz_id": module.bk_biz_id,
             "db_module_id": module.db_module_id,
             "name": module.db_module_name,
             "alias_name": module.alias_name,
-            "db_module_info": module_infos[index][1],
-            "db_version_info": version_views.get(module.db_module_id, {}),
+            "db_module_info": config,
+            "db_version_info": version_views[module.db_module_id],
         }
-        for index, module in enumerate(modules)
+        for module, config in zip(modules, configs)
     ]
 
 
 def module_deploy_charsets(bk_biz_id: int, cluster_type: str, modules) -> Dict[int, str]:
-    """批量读取模块部署配置里的字符集。没有该项时为空字符串。"""
+    """批量读取模块部署配置里的字符集，只用于展示。没有该项或读取失败时为空字符串。"""
     if not modules:
         return {}
 
-    module_infos = _fetch_module_deploy_configs(bk_biz_id, cluster_type, modules)
+    configs = _fetch_module_deploy_configs(bk_biz_id, cluster_type, modules, ignore_error=True)
     charsets = {}
-    for index, module in enumerate(modules):
-        conf_items = (module_infos[index][1] or {}).get("conf_items") or []
+    for module, config in zip(modules, configs):
+        conf_items = (config or {}).get("conf_items") or []
         charset = ""
         for item in conf_items:
             if item.get("conf_name") == "charset":

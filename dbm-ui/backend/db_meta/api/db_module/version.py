@@ -8,7 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, NamedTuple, Optional, Sequence, Tuple
 
 from django.utils.translation import gettext_lazy as _
 
@@ -29,96 +29,97 @@ MODULE_COMPONENT_PKG_TYPE: Dict[str, str] = {
 }
 
 
-def validate_components(components: Mapping[str, DBModuleComponentVersion]) -> None:
-    for component, layer in components.items():
-        validate_component_version(component, layer)
+class PackageOs(NamedTuple):
+    """版本介质包支持的操作系统。os_names 为空列表表示不限制操作系统。"""
+
+    os_type: str
+    os_names: List[str]
 
 
-def validate_component_version(component: str, layer: DBModuleComponentVersion) -> None:
-    db_version = DBVersion.objects.filter(pk=layer.db_version_id).first()
-    if not db_version:
-        raise DBModuleVersionException(message=_("版本 {} 不存在").format(layer.db_version_id))
-    if not db_version.enable:
-        raise DBModuleVersionException(message=_("版本 {} 未启用").format(layer.db_version_id))
+def enabled_package_os(db_version_ids: Iterable[int]) -> Dict[int, PackageOs]:
+    """各版本已启用介质包支持的操作系统，没有已启用介质包的版本不在结果里。
 
-    # 校验绑定的介质版本符合类型
-    pkg_type = (db_version.distribution_snapshot or {}).get("pkg_type", "")
-    expected_pkg = MODULE_COMPONENT_PKG_TYPE.get(component)
-    if expected_pkg and pkg_type != expected_pkg:
-        raise DBModuleVersionException(
-            message=_("组件 {} 不能绑定介质类型 {} 的版本 {}").format(component, pkg_type, layer.db_version_id)
-        )
-
-    # 校验合法的操作系统
-    os_map = enabled_package_permit_os([layer.db_version_id])
-    if layer.os_key not in os_map:
-        raise DBModuleVersionException(
-            message=_("版本 {} 没有 {} 类型的已启用介质包").format(layer.db_version_id, layer.permit_os_type)
-        )
-
-    # 合并结果为空表示该操作系统类型无限制，模块指定任意操作系统都允许
-    package_os = os_map[layer.os_key]
-    if not package_os:
-        return
-    rejected = [name for name in layer.permit_os if name not in package_os]
-    if rejected:
-        raise DBModuleVersionException(
-            message=_("操作系统 {} 不在版本 {} 当前已启用介质包的范围内").format(",".join(rejected), layer.db_version_id)
-        )
-
-
-def enabled_package_permit_os(db_version_ids: Iterable[int]) -> Dict[Tuple[int, str], List[str]]:
-    """查询版本下已启用介质包支持的操作系统，按 (版本ID, 操作系统类型) 合并去重。
-
-    返回示例: {(1, "Linux"): ["tlinux-3.2", "tlinux-4"]}
-    某个版本没有已启用的介质包时，结果里不会出现它。
-    有已启用介质包、但操作系统列表合并后为空，表示该操作系统类型无限制。
+    一个版本只允许上传一个介质包，有多个已启用时取最早上传的那个。
     """
     packages = (
         Package.objects.filter(db_version_id__in=set(db_version_ids), enable=True)
         .order_by("id")
         .values_list("db_version_id", "permit_os_type", "permit_os")
     )
-
-    os_map: Dict[Tuple[int, str], List[str]] = {}
-    for db_version_id, os_type, package_os in packages:
-        os_list = os_map.setdefault((db_version_id, os_type), [])
-        for os_name in package_os or []:
-            if os_name not in os_list:
-                os_list.append(os_name)
-    return os_map
+    result = {}
+    for db_version_id, os_type, os_names in packages:
+        result.setdefault(db_version_id, PackageOs(os_type, list(os_names or [])))
+    return result
 
 
-def get_component_permit_os(db_module, component: str) -> Optional[Tuple[str, List[str]]]:
-    """查询模块某个组件当前允许的操作系统。
+def effective_permit_os(layer: DBModuleComponentVersion, package_os: Mapping[int, PackageOs]) -> Optional[List[str]]:
+    """模块这一层实际允许的操作系统。
 
-    返回 (操作系统类型, 操作系统列表)，例如 ("Linux", ["tlinux-3.2", "tlinux-4"])。
-    该组件还没有设置版本时返回 None。
+    指定范围时用模块上保存的列表；跟随版本包时用介质包的列表，空列表表示不限制。
+    跟随版本包但查不到这个操作系统类型的已启用介质包时返回 None。
     """
-    layer = db_module.current_db_version.get(component)
+    if not layer.follow_package:
+        return list(layer.permit_os)
+
+    package = package_os.get(layer.db_version_id)
+    if not package or package.os_type != layer.permit_os_type:
+        return None
+    return package.os_names
+
+
+def get_layer_permit_os(db_module, access_layer: str) -> Optional[Tuple[str, Optional[List[str]]]]:
+    """模块某一层当前允许的操作系统，返回 (操作系统类型, 操作系统列表)。
+
+    列表的含义见 effective_permit_os。这一层还没设置版本时返回 None。
+    """
+    layer = db_module.current_db_version.get(_layer_component(db_module.cluster_type, access_layer))
     if not layer:
         return None
+    return layer.permit_os_type, effective_permit_os(layer, enabled_package_os([layer.db_version_id]))
 
-    # 固定范围：直接用模块上保存的列表
-    if not layer.follow_package:
-        return layer.permit_os_type, list(layer.permit_os)
 
-    # 跟随版本包：查该版本下已启用介质包的操作系统
-    os_map = enabled_package_permit_os([layer.db_version_id])
-    return layer.permit_os_type, os_map.get(layer.os_key, [])
+def validate_components(components: Mapping[str, DBModuleComponentVersion]) -> None:
+    """校验各组件绑定的版本可用、介质类型匹配、操作系统在介质包范围内。"""
+    version_ids = {layer.db_version_id for layer in components.values()}
+    versions = DBVersion.objects.in_bulk(version_ids)
+    package_os = enabled_package_os(version_ids)
+    for component, layer in components.items():
+        _validate_layer(component, layer, versions.get(layer.db_version_id), package_os.get(layer.db_version_id))
+
+
+def _validate_layer(
+    component: str, layer: DBModuleComponentVersion, db_version: Optional[DBVersion], package: Optional[PackageOs]
+) -> None:
+    version_id = layer.db_version_id
+    if not db_version:
+        raise DBModuleVersionException(message=_("版本 {} 不存在").format(version_id))
+    if not db_version.enable:
+        raise DBModuleVersionException(message=_("版本 {} 未启用").format(version_id))
+
+    pkg_type = (db_version.distribution_snapshot or {}).get("pkg_type", "")
+    if pkg_type != MODULE_COMPONENT_PKG_TYPE.get(component):
+        raise DBModuleVersionException(message=_("组件 {} 不能绑定介质类型 {} 的版本 {}").format(component, pkg_type, version_id))
+
+    if not package or package.os_type != layer.permit_os_type:
+        raise DBModuleVersionException(message=_("版本 {} 没有 {} 类型的已启用介质包").format(version_id, layer.permit_os_type))
+
+    # 介质包不限制操作系统时，模块指定任意操作系统都允许
+    if not package.os_names:
+        return
+    rejected = [name for name in layer.permit_os if name not in package.os_names]
+    if rejected:
+        raise DBModuleVersionException(
+            message=_("操作系统 {} 不在版本 {} 当前已启用介质包的范围内").format(",".join(rejected), version_id)
+        )
 
 
 def storage_version_series(modules: Sequence) -> Dict[int, str]:
-    """各模块存储层已绑定版本的系列名。这一层还没绑版本时为空字符串。"""
-    if not modules:
-        return {}
-
+    """各模块存储层版本的系列名。这一层还没设置版本时为空字符串。"""
     version_views = describe_modules_version(modules)
     series = {}
     for module in modules:
-        component = ClusterMachineAccessTypeDefine.get(module.cluster_type, {}).get(AccessLayer.STORAGE)
-        layer = version_views.get(module.db_module_id, {}).get(getattr(component, "value", ""), {})
-        series[module.db_module_id] = layer.get("version_series", "")
+        storage = _layer_component(module.cluster_type, AccessLayer.STORAGE)
+        series[module.db_module_id] = version_views[module.db_module_id].get(storage, {}).get("version_series", "")
     return series
 
 
@@ -131,38 +132,25 @@ def describe_modules_version(modules: Sequence) -> Dict[int, Dict[str, Dict]]:
 
     返回示例: {模块ID: {"proxy": {...}, "backend": {...}}}，未设置版本的模块对应空字典。
     """
-    # 1. 收集所有模块的组件版本，以及涉及到的版本ID
-    layers_by_module = {}
-    version_ids = set()
-    for module in modules:
-        layers = module.current_db_version
-        layers_by_module[module.db_module_id] = layers
-        for layer in layers.values():
-            version_ids.add(layer.db_version_id)
-
-    # 2. 一次性查出版本信息和介质包操作系统，避免逐个模块查库
+    layers_by_module = {module.db_module_id: module.current_db_version for module in modules}
+    version_ids = {layer.db_version_id for layers in layers_by_module.values() for layer in layers.values()}
     versions = DBVersion.objects.select_related("version_series").in_bulk(version_ids)
-    os_map = enabled_package_permit_os(version_ids)
+    package_os = enabled_package_os(version_ids)
 
-    # 3. 逐个组件拼装展示结构
     result = {}
     for module_id, layers in layers_by_module.items():
         result[module_id] = {}
         for component, layer in layers.items():
-            if layer.follow_package:
-                effective_os = os_map.get(layer.os_key, [])
-            else:
-                effective_os = list(layer.permit_os)
             db_version = versions.get(layer.db_version_id)
-            result[module_id][component] = _describe_layer(layer, db_version, effective_os)
+            result[module_id][component] = _describe_layer(layer, db_version, effective_permit_os(layer, package_os))
     return result
 
 
-def _describe_layer(layer: DBModuleComponentVersion, db_version: Optional[DBVersion], effective_os: List[str]) -> Dict:
+def _describe_layer(
+    layer: DBModuleComponentVersion, db_version: Optional[DBVersion], effective_os: Optional[List[str]]
+) -> Dict:
     info = {
-        "db_version_id": layer.db_version_id,
-        "permit_os_type": layer.permit_os_type,
-        "permit_os": list(layer.permit_os),
+        **layer.to_dict(),
         "follow_package": layer.follow_package,
         "effective_permit_os": effective_os,
         "distribution": "",
@@ -179,3 +167,8 @@ def _describe_layer(layer: DBModuleComponentVersion, db_version: Optional[DBVers
     info["version_name"] = db_version.name
     info["full_version"] = db_version.full_version
     return info
+
+
+def _layer_component(cluster_type: str, access_layer: str) -> Optional[str]:
+    """模块某一层对应的组件名，例如主从的存储层是 backend、TenDBCluster 的接入层是 spider。"""
+    return ClusterMachineAccessTypeDefine.get(cluster_type, {}).get(access_layer)

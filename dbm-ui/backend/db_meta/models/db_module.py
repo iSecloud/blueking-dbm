@@ -116,16 +116,6 @@ class DBModule(AuditedModel):
     def target_db_version(self, data: Mapping):
         self.__db_version_setter(DBModule.target_db_version_info_dict.field.name, data)
 
-    def build_current_permit_os(self, layers: Mapping) -> Dict[str, DBModuleComponentVersion]:
-        """用新的操作系统约束组装已有组件的版本，db_version_id 沿用已保存值。"""
-        current = self.current_db_version
-        result = {}
-        for key, raw in layers.items():
-            if key not in current:
-                raise DBModuleVersionException(message=_("组件 {} 尚未设置版本，不能只修改操作系统").format(key))
-            result[key] = DBModuleComponentVersion.from_dict({**raw, "db_version_id": current[key].db_version_id})
-        return result
-
     def __db_version_getter(self, field_name: str) -> Dict[str, DBModuleComponentVersion]:
         raw = getattr(self, field_name, None) or {}
         if not isinstance(raw, dict):

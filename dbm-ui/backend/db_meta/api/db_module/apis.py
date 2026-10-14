@@ -40,22 +40,18 @@ def create(
     name = request_validator.validated_str(name)
     alias_name = alias or name
     cluster_type = request_validator.validated_str(cluster_type)
-    layers = None
-    if db_versions is not None:
-        layers = {key: DBModuleComponentVersion.from_dict(raw) for key, raw in db_versions.items()}
-        validate_components(layers)
+    db_module = DBModule(
+        bk_biz_id=bk_biz_id,
+        cluster_type=cluster_type,
+        db_module_name=name,
+        alias_name=alias_name,
+        creator=creator,
+        updater=creator,
+    )
+    db_module.current_db_version = db_versions or {}
+    validate_components(db_module.current_db_version)
 
     try:
-        db_module = DBModule(
-            bk_biz_id=bk_biz_id,
-            cluster_type=cluster_type,
-            db_module_name=name,
-            alias_name=alias_name,
-            creator=creator,
-            updater=creator,
-        )
-        if layers is not None:
-            db_module.current_db_version = layers
         db_module.save()
     except IntegrityError:
         raise DbModuleExistException(db_module_name=name)
@@ -76,7 +72,16 @@ def update_permit_os(bk_biz_id: int, db_module_id: int, db_versions: dict) -> di
         db_module = DBModule.objects.get(bk_biz_id=bk_biz_id, db_module_id=db_module_id)
     except DBModule.DoesNotExist:
         raise DBModuleVersionException(message=_("模块 {} 不存在").format(db_module_id))
-    layers = db_module.build_current_permit_os(db_versions)
+
+    current = db_module.current_db_version
+    unset = sorted(set(db_versions) - set(current))
+    if unset:
+        raise DBModuleVersionException(message=_("组件 {} 尚未设置版本，不能只修改操作系统").format(",".join(unset)))
+
+    layers = {
+        component: DBModuleComponentVersion.from_dict({**raw, "db_version_id": current[component].db_version_id})
+        for component, raw in db_versions.items()
+    }
     validate_components(layers)
     db_module.current_db_version = layers
     db_module.save()

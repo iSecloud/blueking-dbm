@@ -23,8 +23,8 @@ from rest_framework import serializers
 from backend import env
 from backend.configuration.constants import AffinityEnum, DBType, SystemSettingsEnum
 from backend.configuration.models import DBAdministrator, SystemSettings
-from backend.db_meta.api.db_module.version import get_component_permit_os
-from backend.db_meta.enums import ClusterMachineAccessTypeDefine, MachineType, TenDBClusterSpiderRole
+from backend.db_meta.api.db_module.version import get_layer_permit_os
+from backend.db_meta.enums import MachineType, TenDBClusterSpiderRole
 from backend.db_meta.models import AppCache, Cluster, DBModule, Machine, ProxyInstance, StorageInstance
 from backend.db_services.dbbase.constants import IpSource
 from backend.iam_app.dataclass.actions import ActionEnum
@@ -409,15 +409,14 @@ class ResourceApplyParamBuilder(CallBackBuilderMixin):
         if not resource_spec.get(role) or "hosts" in resource_spec[role]:
             return
 
-        component = ClusterMachineAccessTypeDefine.get(db_module.cluster_type, {}).get(access_layer)
-        permit_os = get_component_permit_os(db_module, component) if component else None
+        permit_os = get_layer_permit_os(db_module, access_layer)
         # 模块未设置该层版本，保持原有申请行为
         if not permit_os:
             return
 
         os_type, os_names = permit_os
         resource_spec[role]["os_type"] = os_type
-        # 操作系统列表为空表示不限制，只按操作系统类型申请
+        # 不限制操作系统（空列表）或查不到介质包（None）时，只按操作系统类型申请
         if os_names:
             resource_spec[role]["os_names"] = os_names
 

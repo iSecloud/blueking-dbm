@@ -22,7 +22,7 @@ from backend.bk_web import viewsets
 from backend.bk_web.swagger import common_swagger_auto_schema
 from backend.configuration.constants import SystemSettingsEnum
 from backend.configuration.models import SystemSettings
-from backend.db_meta.api.db_module.version import enabled_package_permit_os
+from backend.db_meta.api.db_module.version import enabled_package_os
 from backend.db_meta.models import DBVersion, Distribution, ProxyInstance, StorageInstance, VersionSeries
 from backend.db_package.constants import INIT_DB_PKG_SETTINGS, PackageType
 from backend.db_package.models import Package
@@ -200,13 +200,12 @@ class DBVersionViewSet(viewsets.AuditedModelViewSet):
     )
     @action(detail=True, methods=["GET"], pagination_class=None, filter_fields=None)
     def list_permit_os(self, request, *args, **kwargs):
-        """按操作系统类型返回该版本下已启用介质包支持的操作系统"""
+        """返回该版本已启用介质包支持的操作系统，没有已启用介质包时为空列表"""
         db_version = self.get_object()
-        os_map = enabled_package_permit_os([db_version.id])
-        permit_os_list = [
-            {"permit_os_type": os_type, "permit_os": os_list} for (_version_id, os_type), os_list in os_map.items()
-        ]
-        return Response(permit_os_list)
+        package = enabled_package_os([db_version.id]).get(db_version.id)
+        if not package:
+            return Response([])
+        return Response([{"permit_os_type": package.os_type, "permit_os": package.os_names}])
 
     @common_swagger_auto_schema(
         operation_summary=_("获取某 DB 类型下的 pkg 类型配置"),
