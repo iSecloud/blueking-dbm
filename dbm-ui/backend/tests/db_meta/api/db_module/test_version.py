@@ -12,7 +12,12 @@ import pytest
 
 from backend.configuration.constants import DBType
 from backend.db_meta import api
-from backend.db_meta.api.db_module.version import describe_module_version, get_component_permit_os, validate_components
+from backend.db_meta.api.db_module.version import (
+    describe_module_version,
+    get_component_permit_os,
+    storage_version_series,
+    validate_components,
+)
 from backend.db_meta.dataclass import DBModuleComponentVersion
 from backend.db_meta.enums import ClusterType
 from backend.db_meta.enums.machine_type import MachineType
@@ -246,3 +251,28 @@ class TestDBModuleComponentVersion:
     def test_create_serializer_requires_layers(self):
         serializer = CreateModuleSLZ(data={"db_module_name": "web", "cluster_type": ClusterType.TenDBSingle.value})
         assert serializer.is_valid() is False
+
+    def test_storage_version_series_uses_storage_layer(self):
+        backend = _make_version(MediumEnum.MySQL.value, "MySQL-8.0", "8.0.32.0.0.9", ["tlinux-3.2"])
+        proxy = _make_version(MediumEnum.MySQLProxy.value, "Proxy-2.x", "2.1.0.0.0.9", ["tlinux-3.2"])
+        created = api.db_module.create(
+            bk_biz_id=constant.BK_BIZ_ID,
+            name="series-ha",
+            cluster_type=ClusterType.TenDBHA.value,
+            creator="admin",
+            db_versions={
+                MachineType.BACKEND.value: _layer(backend, []),
+                MachineType.PROXY.value: _layer(proxy, []),
+            },
+        )
+        ha_module = DBModule.objects.get(db_module_id=created["db_module_id"])
+        bare_module = DBModule.objects.create(
+            bk_biz_id=constant.BK_BIZ_ID,
+            db_module_name="series-bare",
+            cluster_type=ClusterType.TenDBHA.value,
+            alias_name="series-bare",
+            **_AUDIT,
+        )
+        series = storage_version_series([ha_module, bare_module])
+        assert series[ha_module.db_module_id] == "MySQL-8.0"
+        assert series[bare_module.db_module_id] == ""

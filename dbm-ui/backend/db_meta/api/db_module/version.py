@@ -13,7 +13,7 @@ from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 from django.utils.translation import gettext_lazy as _
 
 from backend.db_meta.dataclass import DBModuleComponentVersion
-from backend.db_meta.enums import MachineType
+from backend.db_meta.enums import AccessLayer, ClusterMachineAccessTypeDefine, MachineType
 from backend.db_meta.exceptions import DBModuleVersionException
 from backend.db_meta.models.db_version import DBVersion
 from backend.db_package.models import Package
@@ -106,6 +106,20 @@ def get_component_permit_os(db_module, component: str) -> Optional[Tuple[str, Li
     # 跟随版本包：查该版本下已启用介质包的操作系统
     os_map = enabled_package_permit_os([layer.db_version_id])
     return layer.permit_os_type, os_map.get(layer.os_key, [])
+
+
+def storage_version_series(modules: Sequence) -> Dict[int, str]:
+    """各模块存储层已绑定版本的系列名。这一层还没绑版本时为空字符串。"""
+    if not modules:
+        return {}
+
+    version_views = describe_modules_version(modules)
+    series = {}
+    for module in modules:
+        component = ClusterMachineAccessTypeDefine.get(module.cluster_type, {}).get(AccessLayer.STORAGE)
+        layer = version_views.get(module.db_module_id, {}).get(getattr(component, "value", ""), {})
+        series[module.db_module_id] = layer.get("version_series", "")
+    return series
 
 
 def describe_module_version(module) -> Dict[str, Dict]:
