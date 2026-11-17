@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import copy
 from typing import Any, Dict, Optional, Tuple
 
@@ -68,7 +69,7 @@ class ClusterStateSchema(metaclass=ClusterStateSchemaMeta):
     写法（每个组件一个文件，放在 schemas/<组件>.py，由 registry.autodiscover 自动导入）：
 
         class MySQLHAStateSchema(CommonClusterStateSchema):      # 不注册的父类，供多个集群类型共用
-            dbha_disabled = DBHADisabledField()                  # 属性名必须等于字段类声明的 key
+            dbha = DBHAField()                                   # 属性名必须等于字段类声明的 key
             capacity = CapacityField(help_text=_("..."))         # 实例化时可覆盖字段属性（key 除外）
 
         @register_state_schema(cluster_types=[ClusterType.TenDBHA.value])

@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import abc
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Tuple
@@ -18,6 +19,7 @@ from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
 
 from backend.constants import IP_PORT_DIVIDER
+from backend.db_meta.api.cluster_state import ClusterStateService
 from backend.db_meta.api.cluster_state.filters import build_state_filter_q
 from backend.db_meta.enums import ClusterEntryType, ClusterType, InstanceRole, MachineType
 from backend.db_meta.enums.comm import SystemTagEnum
@@ -390,7 +392,7 @@ class BaseListRetrieveResource(CommonQueryResourceMixin):
     def list_clusters(cls, bk_biz_id: int, query_params: Dict, limit: int, offset: int) -> ResourceList:
         """查询集群列表，补充公共字段"""
         resource_list = cls._list_clusters(bk_biz_id, query_params, limit, offset)
-        # ClusterStateService.fill_states(resource_list.data)
+        ClusterStateService.fill_states(resource_list.data)
         return resource_list
 
     @classmethod

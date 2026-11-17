@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.utils.translation import gettext_lazy as _
 
 from blue_krill.data_types.enum import EnumField, StrStructuredEnum
@@ -15,14 +16,14 @@ from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 
 class ClusterPhase(StrStructuredEnum):
     # cluster实际可能存在的phase状态
-    ONLINE = EnumField("online", _("正常"))
-    OFFLINE = EnumField("offline", _("禁用"))
+    ONLINE = EnumField("online", _("已启用"))
+    OFFLINE = EnumField("offline", _("已禁用"))
 
     # 仅用作单据校验，不实际写入，销毁集群时，请直接删除Cluster
     DESTROY = EnumField("destroy", _("销毁"))
 
     # scr, gcs 迁移的中间阶段
-    TRANS_STAGE = EnumField("trans_stage", _("scr/gcs迁移中"))
+    TRANS_STAGE = EnumField("trans_stage", _("迁移中"))
 
     # 克隆的中间阶段
     CLONE_STAGE = EnumField("clone_stage", _("克隆中"))

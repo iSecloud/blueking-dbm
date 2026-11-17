@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import json
 import random
 from unittest.mock import patch
@@ -65,7 +66,7 @@ class TestClusterStateViews:
             "TICKET_LIST",
             True,
         )
-        assert {c["value"]: c["label"] for c in data["fields"][0]["choices"]}["offline"] == "禁用"
+        assert {c["value"]: c["label"] for c in data["fields"][0]["choices"]}["offline"] == "已禁用"
 
     def test_schema_without_display_config(self, bk_biz_id):
         SystemSettings.objects.filter(key=SystemSettingsEnum.CLUSTER_STATE_DISPLAY_FIELDS.value).delete()
@@ -83,7 +84,9 @@ class TestClusterStateViews:
         assert data["display_fields"] == DEFAULT_CLUSTER_STATE_DISPLAY_FIELDS["tendbha"]
         fields = {f["key"]: f for f in data["fields"]}
         assert (fields["capacity"]["source"], fields["capacity"]["value_type"]) == ("stored", "number")
-        assert (fields["dbha_disabled"]["writable"], fields["portrait_report"]["drilldown_type"]) == (True, "LINK")
+        assert (fields["dbha"]["name"], fields["dbha"]["writable"]) == ("自愈", True)
+        assert {c["value"]: c["label"] for c in fields["dbha"]["choices"]} == {True: "开启", False: "屏蔽"}
+        assert fields["portrait_report"]["drilldown_type"] == "LINK"
 
     def test_detail(self, bk_biz_id):
         cluster = create_cluster(ClusterType.TenDBSingle.value, bk_biz_id)

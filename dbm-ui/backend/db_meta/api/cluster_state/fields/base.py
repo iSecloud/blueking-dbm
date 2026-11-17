@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import logging
 import re
 from dataclasses import asdict, fields, is_dataclass
@@ -56,7 +57,7 @@ class StateField:
     - get_display：展示文本。默认展示不合适时覆盖
     其余方法由框架使用，子类不需要覆盖。声明是否完整由 check 在 manage.py check 时校验。
 
-    参考实现见 fields/common.py：PhaseField（最简单的 Native）、DBHADisabledField（可过滤、可写的 Native）、
+    参考实现见 fields/common.py：PhaseField（最简单的 Native）、DBHAField（可过滤、可写的 Native）、
     RunningTicketField（MULTI 取值 + 下钻）、CapacityField（Stored + extra_class）。
     """
 
@@ -254,7 +255,7 @@ class NativeStateField(StateField):
     实现要求：
     - batch_get 必须实现，见 StateField.batch_get 的约定
     - filterable = True 时实现 filter_q；读取和过滤的判断口径要一致，建议抽一个返回 queryset 的方法共用，
-      如 DBHADisabledField.disabled_records
+      如 DBHAField.disabled_records
     - 需要写入时实现 mark / unmark，优先委托给原表已有的写入方法（如 Cluster.disable_dbha），保留原有副作用
     - 原表在其他应用中时在方法内延迟 import，避免 db_meta 反向依赖导致循环引用（如 RunningTicketField）
     MULTI（多值）只允许 Native 字段使用，元素不是字符串时需覆盖 normalize_value

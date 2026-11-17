@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import json
 from unittest.mock import patch
 
@@ -43,11 +44,13 @@ def running_ticket(dbsingle_cluster):
 @patch("backend.db_services.ipchooser.query.resource.CCApi", CCApiMock())
 @patch.object(views.DBSingleViewSet, "get_permissions", lambda x: [])
 class TestDBSingleClusterState:
-    def test_list_without_states(self, dbsingle_cluster, bk_biz_id, running_ticket):
-        """列表暂不挂载 states，避免每页额外查库；原有字段不受影响"""
-        response = list_dbsingle(bk_biz_id)
-        assert "states" not in response.data["results"][0]
-        assert response.data["results"][0]["operations"][0]["ticket_id"] == running_ticket.id
+    def test_list_states(self, dbsingle_cluster, bk_biz_id, running_ticket):
+        """列表挂载 states，原有字段不受影响"""
+        row = list_dbsingle(bk_biz_id).data["results"][0]
+        assert (row["states"]["phase"]["value"], row["states"]["phase"]["display"]) == ("online", "已启用")
+        assert row["states"]["status"]["display"] == "正常"
+        assert running_ticket.id in row["states"]["running_ticket"]["value"]
+        assert row["operations"][0]["ticket_id"] == running_ticket.id
 
     def test_list_filter_by_state(self, dbsingle_cluster, bk_biz_id, running_ticket):
         assert list_dbsingle(bk_biz_id, f"?state__running_ticket={running_ticket.id}").data["count"] == 1

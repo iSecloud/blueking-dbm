@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import random
 
 import pytest
@@ -97,4 +98,6 @@ class TestTenDBSingleCommonFields(StateFieldTestCase):
         assert self.filter_cluster_ids("state__status", "normal", clusters) == {c.id for c in clusters}
 
         state = self.get_state(clusters[1], "phase")
-        assert (state.value, state.display) == ("offline", "禁用")
+        assert (state.value, state.display) == ("offline", "已禁用")
+        assert self.get_state(clusters[0], "phase").display == "已启用"
+        assert self.get_state(clusters[0], "status").display == "正常"

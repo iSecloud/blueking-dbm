@@ -8,7 +8,13 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
-from backend.db_meta.api.cluster_state.fields.common import CapacityField, DBHADisabledField, PortraitReportField
+
+from backend.db_meta.api.cluster_state.fields.common import (
+    CapacityField,
+    DBHAField,
+    PortraitReportField,
+    TenDBClusterStatusField,
+)
 from backend.db_meta.api.cluster_state.registry import register_state_schema
 from backend.db_meta.api.cluster_state.schemas.common import CommonClusterStateSchema
 from backend.db_meta.enums import ClusterType
@@ -22,7 +28,7 @@ class TenDBSingleStateSchema(CommonClusterStateSchema):
 class MySQLHAStateSchema(CommonClusterStateSchema):
     """TenDBHA / TenDBCluster 共有的状态字段，不注册"""
 
-    dbha_disabled = DBHADisabledField()
+    dbha = DBHAField()
     capacity = CapacityField()
     portrait_report = PortraitReportField()
 
@@ -34,4 +40,6 @@ class TenDBHAStateSchema(MySQLHAStateSchema):
 
 @register_state_schema(cluster_types=[ClusterType.TenDBCluster.value])
 class TenDBClusterStateSchema(MySQLHAStateSchema):
-    """TenDBCluster 集群状态"""
+    """TenDBCluster 集群状态。定点构造的临时集群按系统标签展示为「临时」"""
+
+    status = TenDBClusterStatusField()

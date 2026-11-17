@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.utils.translation import gettext as _
 
 from backend.db_services.dbpermission.constants import AccountType
@@ -371,9 +372,9 @@ DEFAULT_AI_CODE_SCENE_MAP = {"log_analysis": {"default": "LogAnalysis"}}
 
 # 默认集群状态展示字段
 DEFAULT_CLUSTER_STATE_DISPLAY_FIELDS = {
-    "tendbsingle": ["phase", "status", "running_ticket"],
-    "tendbha": ["phase", "status", "running_ticket", "dbha_disabled", "capacity", "portrait_report"],
-    "tendbcluster": ["phase", "status", "running_ticket", "dbha_disabled", "capacity", "portrait_report"],
+    "tendbsingle": ["status", "phase"],
+    "tendbha": ["status", "phase", "dbha"],
+    "tendbcluster": ["status", "phase", "dbha"],
 }
 
 # DEFAULT_REVERSE_REPORT_EVENT_TYPES = ["mysql_dbbackup_result", "mysql_dbbackup_progress", "mysql_binlog_result"]
@@ -428,7 +429,12 @@ DEFAULT_SETTINGS = [
     #                                       为 "machine_type" 时填 machine_type 字符串, 如 "proxy", "backend"
     # }
     [SystemSettingsEnum.DISABLE_DBHA_AUTOFIX_APPS, "list", [], _("禁用DBHA自动修复配置")],
-    [SystemSettingsEnum.PACKAGE_SUPPORT_SYSTEMS.value, "dict", DEFAULT_PACKAGE_SUPPORT_SYSTEMS, _("介质支持的操作系统")],
+    [
+        SystemSettingsEnum.PACKAGE_SUPPORT_SYSTEMS.value,
+        "dict",
+        DEFAULT_PACKAGE_SUPPORT_SYSTEMS,
+        _("介质支持的操作系统"),
+    ],
     [SystemSettingsEnum.INIT_OS_TIMESYNC.value, "bool", False, _("机器初始化时间同步开关")],
     [SystemSettingsEnum.MONGODB_PITR_SET_QUERY_BATCH.value, "int", 80, _("MongoDB PITR单次查询分片数")],
     [
