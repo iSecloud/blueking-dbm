@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from enum import IntFlag, auto
 from typing import List
 
@@ -17,10 +18,10 @@ from blue_krill.data_types.enum import EnumField, StrStructuredEnum
 
 
 class ClusterStatus(StrStructuredEnum):
-    NORMAL = EnumField("normal", _("normal"))
-    ABNORMAL = EnumField("abnormal", _("abnormal"))
+    NORMAL = EnumField("normal", _("正常"))
+    ABNORMAL = EnumField("abnormal", _("异常"))
     # spider 定点构造的集群状态标记为临时集群
-    TEMPORARY = EnumField("temporary", _("temporary"))
+    TEMPORARY = EnumField("temporary", _("临时"))
 
 
 class ClusterStatusFlags(IntFlag):

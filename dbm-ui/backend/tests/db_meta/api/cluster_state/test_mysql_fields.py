@@ -19,9 +19,8 @@ from django.utils import timezone
 from backend.db_meta.api.cluster_state import ClusterStateService
 from backend.db_meta.api.cluster_state.fields import CapacityExtra
 from backend.db_meta.api.cluster_state.registry import get_schema
-from backend.db_meta.enums import ClusterStatus, ClusterType
-from backend.db_meta.enums.comm import SystemTagEnum, TagType
-from backend.db_meta.models import ClusterDBHAExt, ClusterState, Tag
+from backend.db_meta.enums import ClusterType
+from backend.db_meta.models import ClusterDBHAExt, ClusterState
 from backend.db_monitor.tasks import sync_cluster_capacity_state
 from backend.db_report.models.cluster_portrait_report import ClusterPortraitReport
 from backend.tests.db_meta.api.cluster_state.base import StateFieldTestCase, create_cluster
@@ -89,25 +88,6 @@ class TestDBHA(StateFieldTestCase):
         assert self.filter_cluster_ids("state__dbha", "false", clusters) == {clusters[0].id}
         assert self.filter_cluster_ids("state__dbha", "true", clusters) == ids - {clusters[0].id}
         assert self.filter_cluster_ids("state__dbha", "true,false", clusters) == ids
-
-
-class TestTenDBClusterStatus(StateFieldTestCase):
-    cluster_type = ClusterType.TenDBCluster.value
-
-    def test_temporary_tag(self, bk_biz_id):
-        clusters = [create_cluster(self.cluster_type, bk_biz_id) for _ in range(2)]
-        clusters[1].status = ClusterStatus.ABNORMAL.value
-        clusters[1].save(update_fields=["status"])
-        tag, __ = Tag.get_builtin_tag(key=SystemTagEnum.TEMPORARY.value, value=True, type=TagType.CLUSTER)
-        clusters[0].tags.add(tag)
-
-        state = self.get_state(clusters[0], "status")
-        assert (state.value, state.display) == (ClusterStatus.TEMPORARY.value, "临时")
-        assert self.get_state(clusters[1], "status").display == "异常"
-        assert self.filter_cluster_ids("state__status", "temporary", clusters) == {clusters[0].id}
-        assert self.filter_cluster_ids("state__status", "normal", clusters) == set()
-        assert self.filter_cluster_ids("state__status", "abnormal", clusters) == {clusters[1].id}
-        assert self.filter_cluster_ids("state__status", "temporary,abnormal", clusters) == {c.id for c in clusters}
 
 
 class TestCapacity(StateFieldTestCase):

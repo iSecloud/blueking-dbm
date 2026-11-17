@@ -84,7 +84,7 @@ class TestClusterStateViews:
         assert data["display_fields"] == DEFAULT_CLUSTER_STATE_DISPLAY_FIELDS["tendbha"]
         fields = {f["key"]: f for f in data["fields"]}
         assert (fields["capacity"]["source"], fields["capacity"]["value_type"]) == ("stored", "number")
-        assert (fields["dbha"]["name"], fields["dbha"]["writable"]) == ("自愈", True)
+        assert (fields["dbha"]["name"], fields["dbha"]["writable"]) == ("高可用切换", True)
         assert {c["value"]: c["label"] for c in fields["dbha"]["choices"]} == {True: "开启", False: "屏蔽"}
         assert fields["portrait_report"]["drilldown_type"] == "LINK"
 

@@ -61,7 +61,7 @@ class ResourceList:
 CLUSTER_STATUS_MAP = {
     "normal": _("正常"),
     "abnormal": _("异常"),
-    "temporary": _("temporary"),
+    "temporary": _("临时"),
 }
 
 

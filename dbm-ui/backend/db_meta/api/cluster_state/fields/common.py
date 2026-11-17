@@ -23,9 +23,8 @@ from django.utils.translation import gettext_lazy as _
 from backend.db_meta.api.cluster_state.fields.base import NativeStateField, StoredStateField
 from backend.db_meta.api.cluster_state.values import StateDetail, StateValue
 from backend.db_meta.enums import ClusterPhase, ClusterStatus, DrillDownType, StateValueType
-from backend.db_meta.enums.comm import SystemTagEnum, TagType
 from backend.db_meta.exceptions import ClusterStateException
-from backend.db_meta.models import Cluster, ClusterDBHAExt, Tag
+from backend.db_meta.models import Cluster, ClusterDBHAExt
 
 # 不传截止时间时视为永久屏蔽 DBHA，与 Redis 集群下线时的永久屏蔽保持一致
 DBHA_DISABLED_FOREVER = datetime(9999, 12, 31, 23, 59, 59, tzinfo=dt_timezone.utc)
@@ -52,17 +51,14 @@ class PhaseField(NativeStateField):
 
 
 class StatusField(NativeStateField):
-    """集群健康状态，数据来源：Cluster.status。展示文案在字段上声明，不改 ClusterStatus 枚举"""
+    """集群健康状态，数据来源：Cluster.status，展示文案以 ClusterStatus 为准"""
 
     key = "status"
     name = _("集群状态")
     help_text = _("集群的健康状态，取自 Cluster.status")
     value_type = StateValueType.ENUM.value
     filterable = True
-    choices = [
-        (ClusterStatus.NORMAL.value, _("正常")),
-        (ClusterStatus.ABNORMAL.value, _("异常")),
-    ]
+    choices = ClusterStatus.get_choices()
 
     def batch_get(self, cluster_ids: List[int]) -> Dict[int, StateValue]:
         """一次查询读取整页集群的 status"""
@@ -72,48 +68,6 @@ class StatusField(NativeStateField):
     def filter_q(self, op: str, values: List[Any]) -> Q:
         """只支持 IN"""
         return Q(status__in=values)
-
-
-class TenDBClusterStatusField(StatusField):
-    """
-    TenDBCluster 的状态。定点构造集群不会把 Cluster.status 写成 temporary，而是打系统标签 temporary。
-    带该标签时取值展示为「临时」，并支持按 temporary 筛选；筛选正常或异常时排除这些集群
-    """
-
-    choices = StatusField.choices + [(ClusterStatus.TEMPORARY.value, _("临时"))]
-
-    @classmethod
-    def temporary_cluster_ids(cls):
-        """带内置 temporary 集群标签的集群"""
-        tag_ids = Tag.objects.filter(key=SystemTagEnum.TEMPORARY.value, is_builtin=True, type=TagType.CLUSTER).values(
-            "id"
-        )
-        return Cluster.tags.through.objects.filter(tag_id__in=tag_ids).values("cluster_id")
-
-    def batch_get(self, cluster_ids: List[int]) -> Dict[int, StateValue]:
-        """有 temporary 标签的集群展示为临时，其余仍取 Cluster.status"""
-        statuses = dict(Cluster.objects.filter(id__in=cluster_ids).values_list("id", "status"))
-        temporary_ids = set(
-            self.temporary_cluster_ids().filter(cluster_id__in=cluster_ids).values_list("cluster_id", flat=True)
-        )
-        return {
-            cluster_id: self.make_state(
-                ClusterStatus.TEMPORARY.value if cluster_id in temporary_ids else statuses[cluster_id]
-            )
-            for cluster_id in statuses
-        }
-
-    def filter_q(self, op: str, values: List[Any]) -> Q:
-        """temporary 按标签筛选；正常、异常按 Cluster.status 筛选并排除临时集群"""
-        temporary_ids = self.temporary_cluster_ids()
-        wants_temporary = ClusterStatus.TEMPORARY.value in values
-        statuses = [value for value in values if value != ClusterStatus.TEMPORARY.value]
-        query = Q()
-        if wants_temporary:
-            query |= Q(id__in=temporary_ids)
-        if statuses:
-            query |= Q(status__in=statuses) & ~Q(id__in=temporary_ids)
-        return query
 
 
 class RunningTicketField(NativeStateField):
@@ -203,14 +157,14 @@ class DBHADisabledDetail:
 
 class DBHAField(NativeStateField):
     """
-    自愈开关，数据来源：ClusterDBHAExt，判断规则与 Cluster.is_dbha_disabled 相反。
+    集群高可用切换开关，数据来源：ClusterDBHAExt，判断规则与 Cluster.is_dbha_disabled 相反。
     true 为开启（没有未过期的屏蔽记录），false 为屏蔽。
     写入委托给 Cluster.disable_dbha / enable_dbha，DBHA 拉取实例时的排除逻辑不变
     """
 
     key = "dbha"
-    name = _("自愈")
-    help_text = _("集群自愈是否开启。false 表示屏蔽了 DBHA 切换，取自 ClusterDBHAExt")
+    name = _("高可用切换")
+    help_text = _("集群高可用切换是否开启。false 表示屏蔽了 DBHA 切换，取自 ClusterDBHAExt")
     value_type = StateValueType.BOOL.value
     default_value = True
     filterable = True
@@ -245,7 +199,7 @@ class DBHAField(NativeStateField):
 
     def mark(self, cluster: Cluster, value: Any, extra: Any = None, operator: str = "") -> None:
         """
-        value 为 True 时开启自愈（解除屏蔽）；value 为 False 时屏蔽 DBHA，
+        value 为 True 时开启高可用切换（解除屏蔽）；value 为 False 时屏蔽 DBHA，
         extra 可传 {"end_time": 屏蔽截止时间（datetime 或可解析的字符串）}，不传为永久屏蔽
         """
         if self.normalize_value(value):
