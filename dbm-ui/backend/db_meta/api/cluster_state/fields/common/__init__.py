@@ -12,13 +12,13 @@ specific language governing permissions and limitations under the License.
 
 - cluster：集群基础字段（phase / status），位于 CommonClusterStateSchema
 - ticket：运行中单据，位于 CommonClusterStateSchema
-- dbha：DBHA 屏蔽开关，MySQL 组件按需引入
+- dbha：集群高可用切换开关，MySQL 组件按需引入
 - capacity：容量使用率，MySQL 组件按需引入
 - portrait：健康报告，MySQL 组件按需引入
 """
 from .capacity import CapacityExtra, CapacityField
 from .cluster import PhaseField, StatusField
-from .dbha import DBHA_DISABLED_FOREVER, DBHADisabledDetail, DBHADisabledField
+from .dbha import DBHA_DISABLED_FOREVER, DBHADisabledDetail, DBHAField
 from .independently_hosted import IndependentlyHostedField
 from .portrait import PortraitReportDetail, PortraitReportField
 from .ticket import RunningTicketField
@@ -28,7 +28,7 @@ __all__ = [
     "CapacityExtra",
     "CapacityField",
     "DBHADisabledDetail",
-    "DBHADisabledField",
+    "DBHAField",
     "PhaseField",
     "PortraitReportDetail",
     "PortraitReportField",

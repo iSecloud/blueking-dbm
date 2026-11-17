@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
@@ -30,8 +31,8 @@ class StateSchemaResponseSerializer(serializers.Serializer):
                         "help_text": _("集群的启用/禁用阶段，取自 Cluster.phase"),
                         "value_type": "enum",
                         "choices": [
-                            {"value": "online", "label": _("正常")},
-                            {"value": "offline", "label": _("禁用")},
+                            {"value": "online", "label": _("已启用")},
+                            {"value": "offline", "label": _("已禁用")},
                         ],
                         "default_value": None,
                         "filterable": True,
@@ -52,7 +53,7 @@ class StateSchemaResponseSerializer(serializers.Serializer):
                         "source": "native",
                     },
                 ],
-                "display_fields": ["phase", "status", "running_ticket"],
+                "display_fields": ["status", "phase"],
             }
         }
 
@@ -72,7 +73,11 @@ class StateDetailResponseSerializer(serializers.Serializer):
                     {"key": "ticket_type_display", "name": _("单据类型")},
                 ],
                 "data": [
-                    {"ticket_id": 101, "ticket_type": "MYSQL_SINGLE_APPLY", "ticket_type_display": _("MySQL单节点部署")}
+                    {
+                        "ticket_id": 101,
+                        "ticket_type": "MYSQL_SINGLE_APPLY",
+                        "ticket_type_display": _("MySQL单节点部署"),
+                    }
                 ],
             }
         }

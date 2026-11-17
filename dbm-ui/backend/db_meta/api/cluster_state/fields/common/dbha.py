@@ -37,19 +37,21 @@ class DBHADisabledDetail:
     creator: str
 
 
-class DBHADisabledField(NativeStateField):
+class DBHAField(NativeStateField):
     """
-    DBHA 开关，数据来源：ClusterDBHAExt，判断规则与 Cluster.is_dbha_disabled 一致（屏蔽截止时间未过期）。
+    集群高可用切换开关，数据来源：ClusterDBHAExt，判断规则与 Cluster.is_dbha_disabled 相反。
+    true 为开启（没有未过期的屏蔽记录），false 为屏蔽。
     写入委托给 Cluster.disable_dbha / enable_dbha，DBHA 拉取实例时的排除逻辑不变
     """
 
-    key = "dbha_disabled"
-    name = _("DBHA 禁用")
-    help_text = _("集群是否屏蔽了 DBHA 切换，取自 ClusterDBHAExt")
+    key = "dbha"
+    name = _("高可用切换")
+    help_text = _("集群高可用切换是否开启。false 表示屏蔽了 DBHA 切换，取自 ClusterDBHAExt")
     value_type = StateValueType.BOOL.value
-    default_value = False
+    default_value = True
     filterable = True
     writable = True
+    choices = [(True, _("开启")), (False, _("屏蔽"))]
 
     @classmethod
     def disabled_records(cls) -> QuerySet:
@@ -66,23 +68,23 @@ class DBHADisabledField(NativeStateField):
             for record in records
         }
         return {
-            cluster_id: self.make_state(cluster_id in details, detail=details.get(cluster_id))
+            cluster_id: self.make_state(cluster_id not in details, detail=details.get(cluster_id))
             for cluster_id in cluster_ids
         }
 
     def filter_q(self, op: str, values: List[Any]) -> Q:
-        """只支持 IN；同时过滤 true 和 false 等于不过滤"""
+        """只支持 IN。true 为开启（未屏蔽），false 为屏蔽；同时过滤 true 和 false 等于不过滤"""
         disabled = Q(id__in=self.disabled_records().values("cluster_id"))
         if set(values) == {True, False}:
             return Q()
-        return disabled if values[0] else ~disabled
+        return ~disabled if values[0] else disabled
 
     def mark(self, cluster: Cluster, value: Any, extra: Any = None, operator: str = "") -> None:
         """
-        value 为 True 时屏蔽 DBHA，extra 可传 {"end_time": 屏蔽截止时间（datetime 或可解析的字符串）}，
-        不传为永久屏蔽；value 为 False 时解除屏蔽
+        value 为 True 时开启高可用切换（解除屏蔽）；value 为 False 时屏蔽 DBHA，
+        extra 可传 {"end_time": 屏蔽截止时间（datetime 或可解析的字符串）}，不传为永久屏蔽
         """
-        if not self.normalize_value(value):
+        if self.normalize_value(value):
             self.unmark(cluster, operator)
             return
         end_time = (extra or {}).get("end_time") or DBHA_DISABLED_FOREVER

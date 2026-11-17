@@ -8,6 +8,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 specific language governing permissions and limitations under the License.
 """
+
 import random
 from datetime import timedelta
 
@@ -30,7 +31,7 @@ MYSQL_HA_FIELDS = [
     "phase",
     "status",
     "running_ticket",
-    "dbha_disabled",
+    "dbha",
     "capacity",
     "portrait_report",
     "independently_hosted",
@@ -60,39 +61,41 @@ class TestMySQLSchemas:
         assert list(get_schema(ClusterType.TenDBSingle.value).get_fields()) == ["phase", "status", "running_ticket"]
 
 
-class TestDBHADisabled(StateFieldTestCase):
+class TestDBHA(StateFieldTestCase):
     cluster_type = ClusterType.TenDBHA.value
 
     def test_mark_and_unmark(self, clusters):
         end_time = timezone.now() + timedelta(days=1)
-        ClusterStateService.mark(clusters[0].id, "dbha_disabled", True, extra={"end_time": end_time.isoformat()})
+        ClusterStateService.mark(clusters[0].id, "dbha", False, extra={"end_time": end_time.isoformat()})
 
-        state = self.get_state(clusters[0], "dbha_disabled")
-        assert state.value is True
+        state = self.get_state(clusters[0], "dbha")
+        assert state.value is False
+        assert state.display == "屏蔽"
         assert state.detail.end_time == end_time
         assert clusters[0].__class__.objects.get(id=clusters[0].id).is_dbha_disabled()
         # Native 字段写已有表，不写状态表
         assert not ClusterState.objects.filter(cluster_id=clusters[0].id).exists()
-        assert self.get_state(clusters[1], "dbha_disabled").value is False
+        assert self.get_state(clusters[1], "dbha").value is True
+        assert self.get_state(clusters[1], "dbha").display == "开启"
 
-        ClusterStateService.unmark(clusters[0].id, "dbha_disabled")
-        assert self.get_state(clusters[0], "dbha_disabled").value is False
+        ClusterStateService.unmark(clusters[0].id, "dbha")
+        assert self.get_state(clusters[0], "dbha").value is True
 
-    def test_mark_forever_and_false(self, clusters):
-        ClusterStateService.mark(clusters[0].id, "dbha_disabled", "true")
+    def test_mark_forever_and_enable(self, clusters):
+        ClusterStateService.mark(clusters[0].id, "dbha", "false")
         assert ClusterDBHAExt.objects.get(cluster_id=clusters[0].id).end_time.year == 9999
-        ClusterStateService.mark(clusters[0].id, "dbha_disabled", False)
+        ClusterStateService.mark(clusters[0].id, "dbha", True)
         assert not ClusterDBHAExt.objects.filter(cluster_id=clusters[0].id).exists()
 
     def test_expired_and_filter(self, clusters):
-        ClusterStateService.mark(clusters[0].id, "dbha_disabled", True)
+        ClusterStateService.mark(clusters[0].id, "dbha", False)
         ClusterDBHAExt.objects.create(cluster=clusters[1], end_time=timezone.now() - timedelta(minutes=1))
-        assert self.get_state(clusters[1], "dbha_disabled").value is False
+        assert self.get_state(clusters[1], "dbha").value is True
 
         ids = {cluster.id for cluster in clusters}
-        assert self.filter_cluster_ids("state__dbha_disabled", "true", clusters) == {clusters[0].id}
-        assert self.filter_cluster_ids("state__dbha_disabled", "false", clusters) == ids - {clusters[0].id}
-        assert self.filter_cluster_ids("state__dbha_disabled", "true,false", clusters) == ids
+        assert self.filter_cluster_ids("state__dbha", "false", clusters) == {clusters[0].id}
+        assert self.filter_cluster_ids("state__dbha", "true", clusters) == ids - {clusters[0].id}
+        assert self.filter_cluster_ids("state__dbha", "true,false", clusters) == ids
 
 
 class TestCapacity(StateFieldTestCase):

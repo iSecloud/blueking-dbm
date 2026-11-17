@@ -40,7 +40,7 @@ class PhaseField(NativeStateField):
 
 
 class StatusField(NativeStateField):
-    """集群健康状态，数据来源：Cluster.status"""
+    """集群健康状态，数据来源：Cluster.status，展示文案以 ClusterStatus 为准"""
 
     key = "status"
     name = _("集群状态")
